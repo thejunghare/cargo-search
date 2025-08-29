@@ -4,13 +4,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cargo - Home</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=wand_shine" />
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <!--<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=help" />-->
     <style media="screen">
+      html {
+        font-family: "Inter", sans-serif;
+        font-optical-sizing: auto;
+      }
+
       body {
         margin: 0px;
         padding: 0px;
         left: 0px;
         top: 0px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
         text-align: center;
         display: flex;
         justify-content: center;
@@ -18,31 +30,70 @@
         height: 100vh;
       }
 
+      .flex-box {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        column-gap: 10px;
+      }
+
       .dest {
+        width: 50%;
         text-align: center;
         color: #616161;
         padding: 10px;
-        width: 550px;
         border: solid transparent 1px;
-        border-radius: 3px;
+        border-radius: 99px;
         outline: none;
         transition: all .3s;
         background: #F5F5F5;
-        margin: 15px auto;
       }
+
+      .ai-btn {
+        padding: 10px;
+        border-radius: 99px;
+        border: none;
+/*        background: #F5F5F5;*/
+        background: none;
+        cursor: pointer;
+      }
+
 
       .dest:hover, .dest:focus {
         border: solid #BDBDBD 1px;
       }
 
-      ::-moz-selection { background: yellow; }
-      ::selection { background: yellow; }
+      .dest::placeholder {
+        font-family: "Inter", sans-serif;
+        font-optical-sizing: auto;
+      }
+
+      ::-moz-selection {
+        background: yellow;
+      }
+      ::selection {
+        background: yellow;
+      }
     </style>
   </head>
   <body>
-    <h1>🚂🚋🚋 Cargo</h1>
+    <!--<h1>🚂🚋🚋 Cargo</h1>-->
+    <h1>Cargo - Search</h1>
     <p class="text">-</p>
-    <input type="text" class="dest" placeholder="Destination">
+    <div class="flex-box">
+      <!--<button class="ai-btn">-->
+      <!--  <span class="material-symbols-outlined">-->
+      <!--    help-->
+      <!--  </span>-->
+      <!--</button>-->
+      <input type="text" class="dest" placeholder="Search Destination">
+      <button class="ai-btn">
+        <span class="material-symbols-outlined">
+          wand_shine
+        </span>
+      </button>
+    </div>
+
 
     <script src="../static/tld.js" charset="utf-8"></script>
     <script src="../static/normalize.js" charset="utf-8"></script>
@@ -58,7 +109,9 @@
           if (parsed.domain != null && parsed.isValid == true) {
             window.location.href = url;
           } else {
-            window.location.href = `https://duckduckgo.com/?q=${ document.querySelector('.dest').value }`;
+            window.location.href = `https://google.com/?q=${
+          document.querySelector('.dest').value
+          }`;
           }
         }
       }, false);
