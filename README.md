@@ -127,10 +127,12 @@ Cargo is still very much work in progress, but we can work together to make it t
 
  - Tests
  - Design improvements
+ - Browser extension
+ - Theme toggle mode
+ - Notes
+ - Task 
  - Settings
     - Search engine
-    - Darkmode
-    - ...
 
 ## Development
 
