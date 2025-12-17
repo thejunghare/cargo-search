@@ -25,7 +25,11 @@ module.exports = onClosed => {
     frame: platform() != 'macos' ? false : true,
     show: false,
     webPreferences: {
-      nodeIntegration: true
+      // nodeIntegration: true
+      nodeIntegration: true,  // ⚠️ Keep true for now to minimize refactoring
+    contextIsolation: false, // ⚠️ Keep false for now (Legacy Mode)
+    webviewTag: true,       // ✅ REQUIRED: Enables <webview> for the browser UI
+    enableRemoteModule: true
     },
     title: 'Cargo',
     icon: image

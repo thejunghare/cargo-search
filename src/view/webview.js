@@ -3,9 +3,11 @@ const vxv = require('vxv');
 const { parse } = require('tldjs');
 const normalizeUrl = require('normalize-url');
 const url = require('url');
-const electron = require('electron');
-const { BrowserWindow } = electron.remote;
 const path = require('path');
+
+// ✅ FIX 1: Correct Modern Electron Imports
+const remote = require('@electron/remote'); 
+const { BrowserWindow } = remote; 
 
 const pages = require('./utils/pages');
 const isCargoURL = require('./utils/isCargoURL');
@@ -66,24 +68,8 @@ module.exports = (emitter, state) => {
     const protocol = url.parse(e.url).protocol;
 
     if (e.disposition == 'new-window') {
-      // let win = new BrowserWindow({
-      //   width: 800,
-      //   height: 600,
-      //   modal: true,
-      //   webPreferences: {
-      //     nodeIntegration: false
-      //   },
-      //   title: 'Cargo',
-      //   icon: path.join(__dirname, '../static/icon.png')
-      // });
-
-      // win.on('closed', () => {
-      //   win = null;
-      // });
-
-      // win.loadURL(e.url);
-
-      // win.setMenu(null);
+      // Logic commented out in original, kept as is.
+      // If uncommented later, ensure BrowserWindow is used from 'remote'
     } else if (
       e.disposition == 'foreground-tab' ||
       e.disposition == 'background-tab' ||
@@ -165,7 +151,7 @@ module.exports = (emitter, state) => {
     if (state.views.length == 0) {
       emitter.emit('tabs-db-flush');
 
-      const remote = require('electron').remote;
+      // ✅ FIX 2: Use the already imported 'remote' (Removed the crash here)
       let w = remote.getCurrentWindow();
       w.close();
     }
