@@ -45,6 +45,7 @@
   "devDependencies": {
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
+    "electron-reload": "^2.0.0-alpha.1",
     "formatted": "^1.0.0"
   },
   "build": {

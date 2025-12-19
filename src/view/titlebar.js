@@ -50,7 +50,7 @@ width: 100%;
 }
 `;
 
-console.log(topbarStyle);
+// console.log(topbarStyle);
 
 module.exports = (emitter, state) => {
   let width = document.body.clientWidth - 300;

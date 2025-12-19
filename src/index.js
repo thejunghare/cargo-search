@@ -3,6 +3,20 @@ const electron = require('electron');
 const isDev = require('electron-is-dev');
 const window = require('./window');
 
+// ? for hot reload start
+
+const path = require('path');
+
+// Add this block
+require('electron-reload')(__dirname, {
+  // This tells it to watch for changes in the 'src' folder
+  // and hard-reset the app if the main file changes.
+  electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
+});
+
+
+// ? for hot reload end
+
 // 1. IMPORT AND INITIALIZE REMOTE MODULE
 // This creates the internal "server" that listens for commands from the window
 const remoteMain = require('@electron/remote/main');
@@ -39,6 +53,7 @@ app.on('activate', () => {
   }
 });
 
+// ! Fix - Uncaught TypeError: Cannot read properties of undefined (reading 'getCurrentWindow')at HTMLDocument.installTitlebar 
 app.on('ready', () => {
   mainWindow = window(onClosed);
   // 3. ENABLE REMOTE FOR THE WINDOW

@@ -186,7 +186,8 @@ module.exports = (emitter, state) => {
 
   emitter.on('webview-devtools', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.openDevTools();
+    // webview.openDevTools();
+    webview.openDevTools({ mode: 'bottom' });
   });
 
  emitter.on('webview-back', () => {

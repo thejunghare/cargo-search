@@ -57,8 +57,9 @@
 
           if (parsed.domain != null && parsed.isValid == true) {
             window.location.href = url;
-          } else {
-            window.location.href = `https://duckduckgo.com/?q=${ document.querySelector('.dest').value }`;
+          } else { 
+            // ! changed to google.com
+            window.location.href = `https://google.com/search?q=${ document.querySelector('.dest').value }`;
           }
         }
       }, false);
