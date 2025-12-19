@@ -43,7 +43,6 @@
     "xou": "^2.0.2"
   },
   "devDependencies": {
-    "devtron": "^1.4.0",
     "electron": "^39.2.7",
     "electron-builder": "^26.0.12",
     "formatted": "^1.0.0"

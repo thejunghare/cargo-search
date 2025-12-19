@@ -1,7 +1,7 @@
 // src/view/keyboard.js (or wherever this file is)
 
 // 1. Use 'remote' to access backend features from the frontend
-const { Menu, MenuItem, dialog } = require('@electron/remote');
+const { Menu, MenuItem, dialog,getCurrentWindow } = require('@electron/remote');
 
 module.exports = (emitter, state) => {
   // 2. Create the Menu
@@ -30,6 +30,28 @@ module.exports = (emitter, state) => {
       label: 'Close Tab',
       click: () => emitter.emit('tabs-remove-current'),
       accelerator: 'CommandOrControl+W'
+    },
+    {
+      label: 'Back',
+      accelerator: 'CommandOrControl+Left',
+      click: () => {
+        emitter.emit('webview-back');
+      }
+    },
+    {
+      label: 'Forward',
+      accelerator: 'CommandOrControl+Right',
+      click: () => {
+        emitter.emit('webview-forward');
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Reload',
+      accelerator: 'CommandOrControl+R',
+      click: () => {
+        emitter.emit('webview-reload');
+      }
     }
   ]);
 
