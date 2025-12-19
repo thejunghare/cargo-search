@@ -189,20 +189,26 @@ module.exports = (emitter, state) => {
     webview.openDevTools();
   });
 
-  emitter.on('webview-back', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+ emitter.on('webview-back', () => {
+  const webview = document.querySelector(`#${state.views[focusedView].id}`);
+  if (webview && webview.canGoBack()) {
     webview.goBack();
-  });
+  }
+});
 
   emitter.on('webview-forward', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+  const webview = document.querySelector(`#${state.views[focusedView].id}`);
+  if (webview && webview.canGoForward()) {
     webview.goForward();
-  });
+  }
+});
 
-  emitter.on('webview-reload', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+emitter.on('webview-reload', () => {
+  const webview = document.querySelector(`#${state.views[focusedView].id}`);
+  if (webview) {
     webview.reload();
-  });
+  }
+});
 
   emitter.on('webview-home', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
