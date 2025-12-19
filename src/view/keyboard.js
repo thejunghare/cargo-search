@@ -83,18 +83,39 @@ module.exports = (emitter, state) => {
       label: "Open History",
       accelerator: "Command+H",
       click: () => emitter.emit("history-toggle")
-    }
+    },
+    {
+  label: 'Previous Tab',
+  accelerator: 'CommandOrControl+Shift+Left',
+  click: () => {
+    emitter.emit('tabs-prev');
+  }
+},
+{
+  label: 'Previous Tab',
+  accelerator: 'CommandOrControl+Shift+Left',
+  click: () => {
+    emitter.emit('tabs-prev');
+  }
+},
+{
+  label: 'Next Tab',
+  accelerator: 'CommandOrControl+Shift+right',
+  click: () => {
+    emitter.emit('tabs-next');
+  }
+}
   ];
 
   // ? Cmd/Ctrl + 1–9 → Switch Tabs
-  /*for (let i = 1; i <= 9; i++)
+  for (let i = 1; i <= 9; i++)
      {
     submenuTemplate.push({
       label: `Tab ${i}`,
       accelerator: `CommandOrControl+${i}`,
       click: () => emitter.emit('tabs-go-to', i - 1)
     });
-  }*/
+  }
 
   const submenu = Menu.buildFromTemplate(submenuTemplate);
 
