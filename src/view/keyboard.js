@@ -81,7 +81,7 @@ module.exports = (emitter, state) => {
     // TODO: command  + h / ctrl  + h
     {
   label: "Open History",
-  accelerator: "CommandOrControl+H",
+  accelerator: "CommandOrControl+Y",
   click: () => emitter.emit("webview-history")
 },
     {

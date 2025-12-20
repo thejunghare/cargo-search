@@ -1,33 +1,20 @@
 'use strict';
 const electron = require('electron');
 const isDev = require('electron-is-dev');
-const window = require('./window');
-
-// ? for hot reload start
-
 const path = require('path');
+const window = require('./window');
+const { app, ipcMain } = electron;
 
-// Add this block
+// Hot reload
 require('electron-reload')(__dirname, {
-  // This tells it to watch for changes in the 'src' folder
-  // and hard-reset the app if the main file changes.
   electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
 });
 
-
-// ? for hot reload end
-
-// 1. IMPORT AND INITIALIZE REMOTE MODULE
-// This creates the internal "server" that listens for commands from the window
+// Remote
 const remoteMain = require('@electron/remote/main');
 remoteMain.initialize();
 
 require('events').EventEmitter.prototype._maxListeners = 100;
-
-const app = electron.app;
-
-const { ipcMain } = electron;
-let historyStore = [];
 
 app.setName('Cargo');
 
@@ -36,33 +23,14 @@ if (isDev) {
 }
 
 let mainWindow;
+let historyStore = [];
 
 function onClosed() {
   mainWindow = null;
 }
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+/* -------------------- IPC (REGISTER FIRST) -------------------- */
 
-app.on('activate', () => {
-  if (!mainWindow) {
-    mainWindow = window(onClosed);
-    // 2. ENABLE REMOTE FOR THE WINDOW
-    // This gives the specific window permission to talk to the main process
-    remoteMain.enable(mainWindow.webContents);
-  }
-});
-
-// ! Fix - Uncaught TypeError: Cannot read properties of undefined (reading 'getCurrentWindow')at HTMLDocument.installTitlebar 
-app.on('ready', () => {
-  mainWindow = window(onClosed);
-  // 3. ENABLE REMOTE FOR THE WINDOW
-  // (We must do this every time the window is created)
-  remoteMain.enable(mainWindow.webContents);
-});
 ipcMain.on('history-add', (_event, item) => {
   if (!item || !item.url) return;
 
@@ -84,5 +52,24 @@ ipcMain.on('history-request', event => {
 ipcMain.on('history-navigate', (_event, url) => {
   if (!mainWindow) return;
 
-  mainWindow.webContents.send('navigate', { slug: url });
+  // Tell renderer to navigate
+  mainWindow.webContents.send('history-go', url);
+});
+
+/* -------------------- APP LIFECYCLE -------------------- */
+
+app.on('ready', () => {
+  mainWindow = window(onClosed);
+  remoteMain.enable(mainWindow.webContents);
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('activate', () => {
+  if (!mainWindow) {
+    mainWindow = window(onClosed);
+    remoteMain.enable(mainWindow.webContents);
+  }
 });

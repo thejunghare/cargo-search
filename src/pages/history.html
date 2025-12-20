@@ -44,21 +44,39 @@
       color: #666;
       word-break: break-all;
     }
+
+    .empty {
+      font-size: 13px;
+      color: #888;
+      margin-top: 20px;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
   <h1>History</h1>
   <ul id="history-list"></ul>
+  <div id="empty" class="empty" style="display:none">
+    No browsing history yet
+  </div>
 
   <script>
-    const { ipcRenderer } = require('electron');
+    const list = document.getElementById('history-list');
+    const empty = document.getElementById('empty');
 
-    ipcRenderer.on('history-data', (_e, history) => {
-      const list = document.getElementById('history-list');
+    // Receive history data from preload
+    window.historyAPI.onData(history => {
       list.innerHTML = '';
 
-      history.reverse().forEach(item => {
+      if (!history || history.length === 0) {
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      history.slice().reverse().forEach(item => {
         const li = document.createElement('li');
 
         li.innerHTML = `
@@ -67,14 +85,15 @@
         `;
 
         li.onclick = () => {
-          ipcRenderer.send('history-navigate', item.url);
+          window.historyAPI.navigate(item.url);
         };
 
         list.appendChild(li);
       });
     });
 
-    ipcRenderer.send('history-request');
+    // Ask main process for history
+    window.historyAPI.request();
   </script>
 </body>
 </html>
