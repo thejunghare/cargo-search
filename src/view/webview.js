@@ -79,6 +79,43 @@ module.exports = (emitter, state) => {
       emitter.emit('tabs-create', e.url);
     }
   };
+  const create = src => {
+  const id = '_wv_' + uuid();
+
+  const startURL = src
+    ? src
+    : `file://${path.join(__dirname, '../pages/home.html')}#${state.theme}`;
+
+  const viewElement = html`
+    <div style="display:none">
+      <webview
+        id="${id}"
+        src="${startURL}"
+        style="width:100%; height: calc(100vh - 40px);">
+      </webview>
+    </div>
+  `;
+
+  document.body.appendChild(viewElement);
+
+  state.views.push({
+    element: viewElement,
+    id
+  });
+
+  changeView(state.views.length - 1);
+
+  const webview = document.querySelector(`#${id}`);
+
+  webview.addEventListener('did-start-loading', didStartLoading);
+  webview.addEventListener('did-stop-loading', didStopLoading);
+  webview.addEventListener('page-title-updated', pageTitleUpdated);
+  webview.addEventListener('did-navigate', didNavigate);
+  webview.addEventListener('click', click);
+  webview.addEventListener('did-fail-load', loadingError);
+
+  return state.views.length - 1;
+};
 
   /*
     Tab management methods
@@ -98,37 +135,37 @@ module.exports = (emitter, state) => {
     emitter.emit('tabs-render');
   };
 
-  const create = src => {
-    const id = '_wv_' + uuid();
-    src = src || './pages/home.html';
+  // const create = src => {
+  //   const id = '_wv_' + uuid();
+  //   src = src || './pages/home.html';
 
-    const viewElement = html`<div style="display: none;">
-      <webview id="${id}" src="${
-      src
-    }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
-    </div>`;
+  //   const viewElement = html`<div style="display: none;">
+  //     <webview id="${id}" src="${
+  //     src
+  //   }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
+  //   </div>`;
 
-    document.body.appendChild(viewElement);
+  //   document.body.appendChild(viewElement);
 
-    state.views.push({
-      element: viewElement,
-      id
-    });
+  //   state.views.push({
+  //     element: viewElement,
+  //     id
+  //   });
 
-    changeView(state.views.length - 1);
+  //   changeView(state.views.length - 1);
 
-    const webview = document.querySelector(`#${id}`);
+  //   const webview = document.querySelector(`#${id}`);
 
-    webview.addEventListener('did-start-loading', didStartLoading);
-    webview.addEventListener('did-stop-loading', didStopLoading);
-    webview.addEventListener('page-title-updated', pageTitleUpdated);
-    webview.addEventListener('did-navigate', didNavigate);
-    webview.addEventListener('click', click);
-    webview.addEventListener('did-fail-load', loadingError);
-    // webview.addEventListener('new-window', newWindow);
+  //   webview.addEventListener('did-start-loading', didStartLoading);
+  //   webview.addEventListener('did-stop-loading', didStopLoading);
+  //   webview.addEventListener('page-title-updated', pageTitleUpdated);
+  //   webview.addEventListener('did-navigate', didNavigate);
+  //   webview.addEventListener('click', click);
+  //   webview.addEventListener('did-fail-load', loadingError);
+  //   // webview.addEventListener('new-window', newWindow);
 
-    return state.views.length - 1;
-  };
+  //   return state.views.length - 1;
+  // };
 
   const remove = id => {
     const el = state.views[id];
@@ -212,9 +249,10 @@ emitter.on('webview-reload', () => {
 });
 
   emitter.on('webview-home', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.setAttribute('src', './pages/home.html#' + state.theme);
-  });
+  const webview = document.querySelector(`#${state.views[focusedView].id}`);
+  const homeURL = `file://${path.join(__dirname, '../pages/home.html')}#${state.theme}`;
+  webview.loadURL(homeURL);
+});
 
   emitter.on('webview-about', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
@@ -279,5 +317,10 @@ emitter.on('webview-reload', () => {
     } else {
       changeTheme('dark');
     }
+  });
+  emitter.on('webview-history', () => {
+    const wv = document.querySelector(`#${state.views[focusedView].id}`);
+    const historyURL = `file://${path.join(__dirname, '../pages/history.html')}`;
+    wv.loadURL(historyURL);
   });
 };

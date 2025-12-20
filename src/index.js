@@ -26,6 +26,9 @@ require('events').EventEmitter.prototype._maxListeners = 100;
 
 const app = electron.app;
 
+const { ipcMain } = electron;
+let historyStore = [];
+
 app.setName('Cargo');
 
 if (isDev) {
@@ -59,4 +62,27 @@ app.on('ready', () => {
   // 3. ENABLE REMOTE FOR THE WINDOW
   // (We must do this every time the window is created)
   remoteMain.enable(mainWindow.webContents);
+});
+ipcMain.on('history-add', (_event, item) => {
+  if (!item || !item.url) return;
+
+  historyStore.push({
+    url: item.url,
+    title: item.title || '',
+    time: Date.now()
+  });
+
+  if (historyStore.length > 500) {
+    historyStore.shift();
+  }
+});
+
+ipcMain.on('history-request', event => {
+  event.sender.send('history-data', historyStore);
+});
+
+ipcMain.on('history-navigate', (_event, url) => {
+  if (!mainWindow) return;
+
+  mainWindow.webContents.send('navigate', { slug: url });
 });

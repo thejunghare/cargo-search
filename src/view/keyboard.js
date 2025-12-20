@@ -51,11 +51,11 @@ module.exports = (emitter, state) => {
     },
 
     // TODO: Fix this
-    // {
-    //   label: 'Last Tab',
-    //   accelerator: 'CommandOrControl+0',
-    //   click: () => emitter.emit('tabs-last')
-    // }
+    {
+      label: 'Last Tab',
+      accelerator: 'CommandOrControl+0',
+      click: () => emitter.emit('tabs-last')
+    }
 
     // TODO: command + shift + d / ctrl + shift + d
     , {
@@ -80,10 +80,10 @@ module.exports = (emitter, state) => {
 
     // TODO: command  + h / ctrl  + h
     {
-      label: "Open History",
-      accelerator: "Command+H",
-      click: () => emitter.emit("history-toggle")
-    },
+  label: "Open History",
+  accelerator: "CommandOrControl+H",
+  click: () => emitter.emit("webview-history")
+},
     {
   label: 'Previous Tab',
   accelerator: 'CommandOrControl+Shift+Left',
@@ -91,16 +91,10 @@ module.exports = (emitter, state) => {
     emitter.emit('tabs-prev');
   }
 },
-{
-  label: 'Previous Tab',
-  accelerator: 'CommandOrControl+Shift+Left',
-  click: () => {
-    emitter.emit('tabs-prev');
-  }
-},
+
 {
   label: 'Next Tab',
-  accelerator: 'CommandOrControl+Shift+right',
+  accelerator: 'CommandOrControl+Shift+Right',
   click: () => {
     emitter.emit('tabs-next');
   }
