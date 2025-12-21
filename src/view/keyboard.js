@@ -59,10 +59,10 @@ module.exports = (emitter, state) => {
 
     // TODO: command + shift + d / ctrl + shift + d
     , {
-      label: "Open Dev Tools",
-      accelerator: "Command+Shift+D",
-      click: () => emitter.emit("webview-devtools")
-    }
+  label: 'Open DevTools',
+  accelerator: 'CommandOrControl+Shift+D',
+  click: () => emitter.emit('open-devtools')
+}
 
     // TODO: command + shift + a / ctrl + shift + a
     , {

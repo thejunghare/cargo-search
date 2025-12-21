@@ -5,208 +5,188 @@ const normalizeUrl = require('normalize-url');
 const url = require('url');
 const path = require('path');
 
-// ✅ FIX 1: Correct Modern Electron Imports
-const remote = require('@electron/remote'); 
-const { BrowserWindow } = remote; 
+const remote = require('@electron/remote');
 
 const pages = require('./utils/pages');
-const isCargoURL = require('./utils/isCargoURL');
 const uuid = require('./utils/uuid');
 
 module.exports = (emitter, state) => {
   let focusedView = -1;
 
   /*
-    DOM Listeners
+    DOM listeners
   */
-  const didStartLoading = () => {
-    emitter.emit('progress-start');
-  };
+  const didStartLoading = () => emitter.emit('progress-start');
 
   const didStopLoading = () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.style.background = 'white';
+    if (webview) webview.style.background = 'white';
     emitter.emit('progress-stop');
   };
 
   const pageTitleUpdated = () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    state.title = 'Loading';
-    state.url = '';
-
     try {
       state.title = webview.getTitle();
       state.url = webview.getURL();
-    } catch (err) {}
+    } catch {
+      state.title = 'Loading';
+      state.url = '';
+    }
 
     emitter.emit('titlebar-title-updated');
     emitter.emit('tabs-render');
   };
 
-  const didNavigate = e => {
+  const didNavigate = () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
     state.url = webview.getURL();
+
     emitter.emit('titlebar-url-updated');
-    setTimeout(() => {
-      emitter.emit('history-navigated', { url: state.url, title: webview.getTitle() });
-    }, 20);
+    emitter.emit('history-add', {
+      url: state.url,
+      title: webview.getTitle()
+    });
   };
 
-  const click = () => {
-    emitter.emit('titlebar-title-updated');
-  };
-
-  const loadingError = err => {
-    console.log(err);
+  const loadingError = () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
     webview.setAttribute('src', './pages/error.html');
   };
 
-  const newWindow = e => {
-    e.preventDefault();
-
-    const protocol = url.parse(e.url).protocol;
-
-    if (e.disposition == 'new-window') {
-      // Logic commented out in original, kept as is.
-      // If uncommented later, ensure BrowserWindow is used from 'remote'
-    } else if (
-      e.disposition == 'foreground-tab' ||
-      e.disposition == 'background-tab' ||
-      e.disposition == 'default' ||
-      e.disposition == 'other'
-    ) {
-      emitter.emit('tabs-create', e.url);
-    }
-  };
+  /*
+    Create WebView
+  */
   const create = src => {
-  const id = '_wv_' + uuid();
+    const id = '_wv_' + uuid();
 
-  const startURL = src
-    ? src
-    : `file://${path.join(__dirname, '../pages/home.html')}#${state.theme}`;
+    const startURL = src
+      ? src
+      : `file://${path.join(__dirname, '../pages/home.html')}#${state.theme}`;
 
-  const viewElement = html`
-    <div style="display:none">
-      <webview
-        id="${id}"
-        src="${startURL}"
-        style="width:100%; height: calc(100vh - 40px);">
-      </webview>
-    </div>
-  `;
+    const viewElement = html`
+      <div style="display:none">
+        <webview
+          id="${id}"
+          src="${startURL}"
+          style="width:100%; height: calc(100vh - 40px);"
+          allowpopups
+        ></webview>
+      </div>
+    `;
 
-  document.body.appendChild(viewElement);
+    document.body.appendChild(viewElement);
 
-  state.views.push({
-    element: viewElement,
-    id
-  });
+    state.views.push({ element: viewElement, id });
 
-  changeView(state.views.length - 1);
+    changeView(state.views.length - 1);
 
-  const webview = document.querySelector(`#${id}`);
+    const webview = document.querySelector(`#${id}`);
 
-  webview.addEventListener('did-start-loading', didStartLoading);
-  webview.addEventListener('did-stop-loading', didStopLoading);
-  webview.addEventListener('page-title-updated', pageTitleUpdated);
-  webview.addEventListener('did-navigate', didNavigate);
-  webview.addEventListener('click', click);
-  webview.addEventListener('did-fail-load', loadingError);
+    webview.addEventListener('did-start-loading', didStartLoading);
+    webview.addEventListener('did-stop-loading', didStopLoading);
+    webview.addEventListener('page-title-updated', pageTitleUpdated);
+    webview.addEventListener('did-navigate', didNavigate);
+    webview.addEventListener('did-fail-load', loadingError);
 
-  return state.views.length - 1;
-};
+    /*
+      🔑 KEYBOARD SHORTCUTS (WORKS WHEN WEBVIEW IS FOCUSED)
+    */
+    webview.addEventListener('before-input-event', event => {
+      const i = event.input;
+      const isMac = process.platform === 'darwin';
+      const key = i.key.toLowerCase();
+
+      // DevTools ⌘⇧D / Ctrl⇧D
+      if (
+        (isMac && i.meta && i.shift && key === 'd') ||
+        (!isMac && i.control && i.shift && key === 'd')
+      ) {
+        event.preventDefault();
+        emitter.emit('webview-devtools');
+        return;
+      }
+
+      // History ⌘H / Ctrl+H
+      if (
+        (isMac && i.meta && !i.shift && key === 'h') ||
+        (!isMac && i.control && !i.shift && key === 'h')
+      ) {
+        event.preventDefault();
+        emitter.emit('webview-history');
+        return;
+      }
+
+      // Prev Tab ⌘⇧←
+      if (
+        (isMac && i.meta && i.shift && i.key === 'ArrowLeft') ||
+        (!isMac && i.control && i.shift && i.key === 'ArrowLeft')
+      ) {
+        event.preventDefault();
+        emitter.emit('tabs-prev');
+        return;
+      }
+
+      // Next Tab ⌘⇧→
+      if (
+        (isMac && i.meta && i.shift && i.key === 'ArrowRight') ||
+        (!isMac && i.control && i.shift && i.key === 'ArrowRight')
+      ) {
+        event.preventDefault();
+        emitter.emit('tabs-next');
+        return;
+      }
+
+      // Last Tab ⌘0
+      if (
+        (isMac && i.meta && key === '0') ||
+        (!isMac && i.control && key === '0')
+      ) {
+        event.preventDefault();
+        emitter.emit('tabs-last');
+        return;
+      }
+
+      // Tabs ⌘1–9
+      if (
+        ((isMac && i.meta) || (!isMac && i.control)) &&
+        key >= '1' &&
+        key <= '9'
+      ) {
+        event.preventDefault();
+        emitter.emit('tabs-go-to', Number(key) - 1);
+      }
+    });
+
+    return state.views.length - 1;
+  };
 
   /*
-    Tab management methods
+    View switching
   */
   const changeView = id => {
-    const el = state.views[id];
+    if (focusedView >= 0) {
+      state.views[focusedView].element.style.display = 'none';
+    }
 
-    if (focusedView >= 0) state.views[focusedView].element.style.display = 'none';
-
-    el.element.style.display = 'block';
-    el.element.focus();
-
+    state.views[id].element.style.display = 'block';
     focusedView = id;
 
     pageTitleUpdated();
-
     emitter.emit('tabs-render');
   };
 
-  // const create = src => {
-  //   const id = '_wv_' + uuid();
-  //   src = src || './pages/home.html';
-
-  //   const viewElement = html`<div style="display: none;">
-  //     <webview id="${id}" src="${
-  //     src
-  //   }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
-  //   </div>`;
-
-  //   document.body.appendChild(viewElement);
-
-  //   state.views.push({
-  //     element: viewElement,
-  //     id
-  //   });
-
-  //   changeView(state.views.length - 1);
-
-  //   const webview = document.querySelector(`#${id}`);
-
-  //   webview.addEventListener('did-start-loading', didStartLoading);
-  //   webview.addEventListener('did-stop-loading', didStopLoading);
-  //   webview.addEventListener('page-title-updated', pageTitleUpdated);
-  //   webview.addEventListener('did-navigate', didNavigate);
-  //   webview.addEventListener('click', click);
-  //   webview.addEventListener('did-fail-load', loadingError);
-  //   // webview.addEventListener('new-window', newWindow);
-
-  //   return state.views.length - 1;
-  // };
-
   const remove = id => {
     const el = state.views[id];
-
-    const webview = document.querySelector(`#${el.id}`);
-
-    webview.removeEventListener('did-start-loading', didStartLoading);
-    webview.removeEventListener('did-stop-loading', didStopLoading);
-    webview.removeEventListener('page-title-updated', pageTitleUpdated);
-    webview.removeEventListener('did-navigate', didNavigate);
-    webview.removeEventListener('click', click);
-    webview.removeEventListener('did-fail-load', loadingError);
-    // webview.removeEventListener('new-window', newWindow);
-
-    state.views.splice(id, 1);
-    focusedView = 0;
-
     el.element.remove();
+    state.views.splice(id, 1);
 
-    if (state.views.length == 0) {
-      emitter.emit('tabs-db-flush');
-
-      // ✅ FIX 2: Use the already imported 'remote' (Removed the crash here)
-      let w = remote.getCurrentWindow();
-      w.close();
+    if (state.views.length === 0) {
+      remote.getCurrentWindow().close();
+      return;
     }
 
-    id = id - 1;
-
-    if (id < 0) {
-      id = 0;
-    }
-
-    changeView(id);
-  };
-  /*
-    DarkMode 
-  */
-  const changeTheme = name => {
-    state.theme = name;
-    document.getElementById('theme').setAttribute('href', './static/theme/' + state.theme + '.css');
+    changeView(Math.max(0, id - 1));
   };
 
   /*
@@ -216,111 +196,29 @@ module.exports = (emitter, state) => {
   emitter.on('webview-remove', remove);
   emitter.on('webview-change', changeView);
 
-  emitter.on('webview-set-focus', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.focus();
-  });
-
-  emitter.on('webview-devtools', () => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    // webview.openDevTools();
-    webview.openDevTools({ mode: 'bottom' });
-  });
-
- emitter.on('webview-back', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview && webview.canGoBack()) {
-    webview.goBack();
-  }
+  emitter.on('open-devtools', () => {
+  const win = remote.getCurrentWindow();
+  win.webContents.openDevTools({ mode: 'bottom' });
 });
 
-  emitter.on('webview-forward', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview && webview.canGoForward()) {
-    webview.goForward();
-  }
-});
-
-emitter.on('webview-reload', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview) {
-    webview.reload();
-  }
-});
-
-  emitter.on('webview-home', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  const homeURL = `file://${path.join(__dirname, '../pages/home.html')}#${state.theme}`;
-  webview.loadURL(homeURL);
-});
-
-  emitter.on('webview-about', () => {
+  emitter.on('webview-history', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.setAttribute('src', './pages/about.html');
-  });
-
-  emitter.on('navigate', options => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.focus();
-
-    let slug = options.slug;
-    const url = normalizeUrl(slug);
-    const parsed = parse(url, true);
-
-    if (url.startsWith('file:///')) {
-      return webview.loadURL(slug);
-    }
-
-    if (!slug.startsWith('http://') && !slug.startsWith('https://')) {
-      slug = 'http://' + slug;
-    }
-
-    if (parsed.domain != null && parsed.isValid == true) {
-      if (pages[parsed.domain] != null) {
-        webview.setAttribute('src', pages[parsed.domain]);
-      } else {
-        webview.loadURL(slug);
-      }
-    } else {
-      slug = options.expand
-        ? `http://www.${options.slug}.com`
-        : `https://duckduckgo.com/?q=${options.slug}`;
-      webview.loadURL(slug);
-    }
+    webview.loadURL(`file://${path.join(__dirname, '../pages/history.html')}`);
   });
 
   emitter.on('tabs-next', () => {
-    if (focusedView + 1 < state.views.length) {
-      changeView(focusedView + 1);
-    }
+    if (focusedView + 1 < state.views.length) changeView(focusedView + 1);
   });
 
   emitter.on('tabs-prev', () => {
-    if (focusedView - 1 >= 0) {
-      changeView(focusedView - 1);
-    }
+    if (focusedView > 0) changeView(focusedView - 1);
   });
 
   emitter.on('tabs-go-to', id => {
-    if (id < state.views.length && id >= 0) {
-      changeView(id);
-    }
+    if (id >= 0 && id < state.views.length) changeView(id);
   });
 
   emitter.on('tabs-last', () => {
     changeView(state.views.length - 1);
-  });
-
-  emitter.on('dark-mode', () => {
-    if (state.theme === 'dark') {
-      changeTheme('light');
-    } else {
-      changeTheme('dark');
-    }
-  });
-  emitter.on('webview-history', () => {
-    const wv = document.querySelector(`#${state.views[focusedView].id}`);
-    const historyURL = `file://${path.join(__dirname, '../pages/history.html')}`;
-    wv.loadURL(historyURL);
   });
 };
