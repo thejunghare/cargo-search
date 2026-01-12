@@ -6,8 +6,8 @@ const url = require('url');
 const path = require('path');
 
 // ✅ FIX 1: Correct Modern Electron Imports
-const remote = require('@electron/remote'); 
-const { BrowserWindow } = remote; 
+const remote = require('@electron/remote');
+const { BrowserWindow } = remote;
 
 const pages = require('./utils/pages');
 const isCargoURL = require('./utils/isCargoURL');
@@ -37,7 +37,7 @@ module.exports = (emitter, state) => {
     try {
       state.title = webview.getTitle();
       state.url = webview.getURL();
-    } catch (err) {}
+    } catch (err) { }
 
     emitter.emit('titlebar-title-updated');
     emitter.emit('tabs-render');
@@ -103,9 +103,8 @@ module.exports = (emitter, state) => {
     src = src || './pages/home.html';
 
     const viewElement = html`<div style="display: none;">
-      <webview id="${id}" src="${
-      src
-    }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
+      <webview id="${id}" src="${src
+      }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
     </div>`;
 
     document.body.appendChild(viewElement);
@@ -186,30 +185,40 @@ module.exports = (emitter, state) => {
 
   emitter.on('webview-devtools', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    // webview.openDevTools();
-    webview.openDevTools({ mode: 'bottom' });
+    if (!webview) return;
+
+    console.log('DevTools Shortcut Triggered');
+    console.log('isDevToolsOpened:', webview.isDevToolsOpened());
+
+    if (webview.isDevToolsOpened()) {
+      webview.closeDevTools();
+      console.log('Closing DevTools');
+    } else {
+      webview.openDevTools({ mode: 'bottom' });
+      console.log('Opening DevTools');
+    }
   });
 
- emitter.on('webview-back', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview && webview.canGoBack()) {
-    webview.goBack();
-  }
-});
+  emitter.on('webview-back', () => {
+    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+    if (webview && webview.canGoBack()) {
+      webview.goBack();
+    }
+  });
 
   emitter.on('webview-forward', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview && webview.canGoForward()) {
-    webview.goForward();
-  }
-});
+    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+    if (webview && webview.canGoForward()) {
+      webview.goForward();
+    }
+  });
 
-emitter.on('webview-reload', () => {
-  const webview = document.querySelector(`#${state.views[focusedView].id}`);
-  if (webview) {
-    webview.reload();
-  }
-});
+  emitter.on('webview-reload', () => {
+    const webview = document.querySelector(`#${state.views[focusedView].id}`);
+    if (webview) {
+      webview.reload();
+    }
+  });
 
   emitter.on('webview-home', () => {
     const webview = document.querySelector(`#${state.views[focusedView].id}`);

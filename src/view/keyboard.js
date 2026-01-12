@@ -41,7 +41,7 @@ module.exports = (emitter, state) => {
       accelerator: 'CommandOrControl+Right',
       click: () => emitter.emit('webview-forward')
     },
-    
+
     { type: 'separator' },
 
     {
@@ -87,14 +87,13 @@ module.exports = (emitter, state) => {
   ];
 
   // ? Cmd/Ctrl + 1–9 → Switch Tabs
-  /*for (let i = 1; i <= 9; i++)
-     {
+  for (let i = 1; i <= 9; i++) {
     submenuTemplate.push({
       label: `Tab ${i}`,
       accelerator: `CommandOrControl+${i}`,
       click: () => emitter.emit('tabs-go-to', i - 1)
     });
-  }*/
+  }
 
   const submenu = Menu.buildFromTemplate(submenuTemplate);
 

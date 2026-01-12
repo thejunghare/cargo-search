@@ -5,39 +5,37 @@ const betterUrl = require('./utils/betterURL');
 const dotify = require('./utils/dotify');
 
 const styles = vxv`
-top: 41px;
+top: 68px; /* Push down to clear taller titlebar + spacing */
 left: 0px;
 right: 0px;
 position: fixed;
-padding: 8px 15px;
-background: white;
+padding: 0 24px; /* Match titlebar padding */
+background: transparent; /* Transparent track */
 text-align: center;
 margin: 0px;
-padding: 0px;
-border-bottom: solid #E0E0E0 1px;
+border: none;
 transition: opacity .3s;
 
 display: none;
 opacity: 0;
 
 :global(.tabs) {
+border-radius:10px red solid;
   position: fixed;
   left: 0px;
   right: 0px;
   top: 0px;
-  margin-top: 41px;
+  margin-top: 68px;
 }
 
 :global(.simplebar-scrollbar) {
-  border-radius: 0px!important;
+  border-radius: 4px!important;
+  background-color: rgba(0,0,0,0.1);
 }
 
 :global(.simplebar-track.horizontal) {
-  height: 3px;
-}
-
-:global(.horizontal.simplebar-track .simplebar-scrollbar) {
-  top: 0px;
+  height: 6px;
+  background: transparent;
 }
 
 ul {
@@ -46,34 +44,47 @@ ul {
   padding: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  overflow: hidden;
   white-space: nowrap;
   text-align: left;
-  margin-bottom: -1px;
+  display: flex;
+  gap: 8px; /* Space between tabs */
 }
 
 li {
-  margin-top: 0px;
-  display: inline-block;
-  margin: 0px auto;
-  width: 180px;
-  padding: 10px 16px 10px 16px;
-  border-right: solid #E0E0E0 1px;
-  heigth: 100%;
-  transition: all .3s;
+  display: inline-flex;
+  align-items: center;
+  width: 200px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.7); /* translucent inactive */
+  border: 1px solid transparent;
+  border-radius: 8px 8px 0 0; /* Rounded top */
+  /* OR fully rounded pill: border-radius: 8px; */
+  border-radius: 10px;
+  
+  height: 36px;
+  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   font-size: 12px;
   font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  cursor: pointer;
 }
 
 li a {
-  color: black;
-  text-align: center;
+  color: #5f6368;
+  text-align: left;
   text-decoration: none;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none; /* Let parent handle click */
 }
 
 li:hover {
-  background: #F5F5F5;
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 
   .close {
     opacity: 1;
@@ -81,130 +92,105 @@ li:hover {
 }
 
 li.active {
-  border-bottom: solid black 1px;
+  background: #FFF;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  color: #1a73e8;
+  z-index: 2;
+
+  & a {
+    color: #202124;
+    font-weight: 600;
+  }
 
   .close {
     opacity: 1;
   }
 }
 
-.back, .forward {
-  font-size: 12px;
-}
-
 .close {
   position: absolute !important;
-  right: 7px;
-  top: 9px;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   opacity: 0;
-  transition: all .3s;
+  transition: all .2s;
   cursor: pointer;
-}
-
-.close:hover {
-  font-weight: 900;
+  padding: 4px;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 10px;
+  color: #999;
+  
+  &:hover {
+    background: rgba(0,0,0,0.1);
+    color: #d93025;
+  }
 }
 `;
 
 let toggle = false;
-let a = () => {};
+let a = () => { };
 
 module.exports = (emitter, state) => {
   const render = () => {
     const el = html`<div id="tabs" class="${styles}">
       <ul class="tabs-bar">
         ${state.views.map((view, id) => {
-          const webview = document.querySelector(`#${view.id}`);
-          const active = view.element.style.display == 'block' ? true : false;
-          let title = 'Loading';
+      const webview = document.querySelector(`#${view.id}`);
+      const active = view.element.style.display == 'block' ? true : false;
+      let title = 'Loading';
 
-          try {
-            title = dotify(webview.getTitle());
-          } catch (err) {}
+      try {
+        title = dotify(webview.getTitle());
+      } catch (err) { }
 
-          if (title == '' || title == ' ' || title == undefined) {
-            title = dotify(webview.getURL());
-          }
+      if (title == '' || title == ' ' || title == undefined) {
+        title = dotify(webview.getURL());
+      }
 
-          if (title == '' || title == ' ' || title == undefined) {
-            title = dotify(betterUrl(webview.getAttribute('src')) || 'Loading');
-          }
+      if (title == '' || title == ' ' || title == undefined) {
+        title = dotify(betterUrl(webview.getAttribute('src')) || 'Loading');
+      }
 
-          let closeClicked = false;
+      let closeClicked = false;
 
-          return html`<li class="${active == true ? 'active' : ''}" onclick=${() => {
-            if (!closeClicked) {
-              emitter.emit('webview-change', id);
-              emitter.emit('tabs-render');
-            }
-          }}><a class="nav">${title} <span class="close" onclick=${e => {
-            closeClicked = true;
-            e.preventDefault();
-            emitter.emit('webview-remove', id);
+      return html`<li class="${active == true ? 'active' : ''}" onclick=${() => {
+        if (!closeClicked) {
+          emitter.emit('webview-change', id);
+          emitter.emit('tabs-render');
+        }
+      }}><a class="nav">${title} <span class="close" onclick=${e => {
+        closeClicked = true;
+        e.preventDefault();
+        emitter.emit('webview-remove', id);
 
-            setTimeout(() => {
-              closeClicked = false;
-            }, 10);
-          }}>×</span></a></li>`;
-        })}
+        setTimeout(() => {
+          closeClicked = false;
+        }, 10);
+      }}>×</span></a></li>`;
+    })}
       </ul>
     </div>`;
 
     new SimpleBar(el.querySelector('.tabs-bar'));
 
-    if (toggle) {
-      el.style.opacity = '0';
-      el.style.display = 'none';
-    } else {
-      el.style.display = 'block';
-      el.style.opacity = '1';
-    }
+    el.style.display = 'block';
+    el.style.opacity = '1';
 
     return el;
   };
 
   const element = render();
-  let closeTabsTimeout = setTimeout(() => {
-    emitter.emit('tabs-toggle');
-  }, 10000);
-
   document.body.appendChild(element);
 
   emitter.on('tabs-render', () => {
     const newEl = render();
     html.update(element, newEl);
-    clearTimeout(closeTabsTimeout);
-    closeTabsTimeout = setTimeout(() => {
-      emitter.emit('tabs-toggle');
-    }, 10000);
   });
 
-  emitter.on('tabs-toggle', () => {
-    if (element.style.display == 'block') {
-      clearTimeout(closeTabsTimeout);
-
-      element.style.opacity = '0';
-
-      setTimeout(() => {
-        element.style.display = 'none';
-      }, 280);
-
-      toggle = false;
-    } else {
-      element.style.display = 'block';
-
-      setTimeout(() => {
-        element.style.opacity = '1';
-      }, 5);
-
-      toggle = true;
-
-      clearTimeout(closeTabsTimeout);
-      closeTabsTimeout = setTimeout(() => {
-        emitter.emit('tabs-toggle');
-      }, 10000);
-    }
-  });
+  // Toggle functionality removed to keep tabs persistent
+  // emitter.on('tabs-toggle', ... );
 
   emitter.on('tabs-create', src => {
     emitter.emit('webview-create', src);
