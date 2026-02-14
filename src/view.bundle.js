@@ -33,6 +33,176 @@
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+  // node_modules/process/browser.js
+  var require_browser = __commonJS({
+    "node_modules/process/browser.js"(exports, module) {
+      init_polyfills();
+      var process2 = module.exports = {};
+      var cachedSetTimeout;
+      var cachedClearTimeout;
+      function defaultSetTimout() {
+        throw new Error("setTimeout has not been defined");
+      }
+      function defaultClearTimeout() {
+        throw new Error("clearTimeout has not been defined");
+      }
+      (function() {
+        try {
+          if (typeof setTimeout === "function") {
+            cachedSetTimeout = setTimeout;
+          } else {
+            cachedSetTimeout = defaultSetTimout;
+          }
+        } catch (e) {
+          cachedSetTimeout = defaultSetTimout;
+        }
+        try {
+          if (typeof clearTimeout === "function") {
+            cachedClearTimeout = clearTimeout;
+          } else {
+            cachedClearTimeout = defaultClearTimeout;
+          }
+        } catch (e) {
+          cachedClearTimeout = defaultClearTimeout;
+        }
+      })();
+      function runTimeout(fun) {
+        if (cachedSetTimeout === setTimeout) {
+          return setTimeout(fun, 0);
+        }
+        if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+          cachedSetTimeout = setTimeout;
+          return setTimeout(fun, 0);
+        }
+        try {
+          return cachedSetTimeout(fun, 0);
+        } catch (e) {
+          try {
+            return cachedSetTimeout.call(null, fun, 0);
+          } catch (e2) {
+            return cachedSetTimeout.call(this, fun, 0);
+          }
+        }
+      }
+      function runClearTimeout(marker) {
+        if (cachedClearTimeout === clearTimeout) {
+          return clearTimeout(marker);
+        }
+        if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+          cachedClearTimeout = clearTimeout;
+          return clearTimeout(marker);
+        }
+        try {
+          return cachedClearTimeout(marker);
+        } catch (e) {
+          try {
+            return cachedClearTimeout.call(null, marker);
+          } catch (e2) {
+            return cachedClearTimeout.call(this, marker);
+          }
+        }
+      }
+      var queue = [];
+      var draining = false;
+      var currentQueue;
+      var queueIndex = -1;
+      function cleanUpNextTick() {
+        if (!draining || !currentQueue) {
+          return;
+        }
+        draining = false;
+        if (currentQueue.length) {
+          queue = currentQueue.concat(queue);
+        } else {
+          queueIndex = -1;
+        }
+        if (queue.length) {
+          drainQueue();
+        }
+      }
+      function drainQueue() {
+        if (draining) {
+          return;
+        }
+        var timeout = runTimeout(cleanUpNextTick);
+        draining = true;
+        var len = queue.length;
+        while (len) {
+          currentQueue = queue;
+          queue = [];
+          while (++queueIndex < len) {
+            if (currentQueue) {
+              currentQueue[queueIndex].run();
+            }
+          }
+          queueIndex = -1;
+          len = queue.length;
+        }
+        currentQueue = null;
+        draining = false;
+        runClearTimeout(timeout);
+      }
+      process2.nextTick = function(fun) {
+        var args = new Array(arguments.length - 1);
+        if (arguments.length > 1) {
+          for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+          }
+        }
+        queue.push(new Item(fun, args));
+        if (queue.length === 1 && !draining) {
+          runTimeout(drainQueue);
+        }
+      };
+      function Item(fun, array) {
+        this.fun = fun;
+        this.array = array;
+      }
+      Item.prototype.run = function() {
+        this.fun.apply(null, this.array);
+      };
+      process2.title = "browser";
+      process2.browser = true;
+      process2.env = {};
+      process2.argv = [];
+      process2.version = "";
+      process2.versions = {};
+      function noop() {
+      }
+      process2.on = noop;
+      process2.addListener = noop;
+      process2.once = noop;
+      process2.off = noop;
+      process2.removeListener = noop;
+      process2.removeAllListeners = noop;
+      process2.emit = noop;
+      process2.prependListener = noop;
+      process2.prependOnceListener = noop;
+      process2.listeners = function(name) {
+        return [];
+      };
+      process2.binding = function(name) {
+        throw new Error("process.binding is not supported");
+      };
+      process2.cwd = function() {
+        return "/";
+      };
+      process2.chdir = function(dir) {
+        throw new Error("process.chdir is not supported");
+      };
+      process2.umask = function() {
+        return 0;
+      };
+    }
+  });
+
+  // src/polyfills.js
+  var init_polyfills = __esm({
+    "src/polyfills.js"() {
+      globalThis.process = require_browser();
+    }
+  });
+
   // node_modules/mitt/dist/mitt.mjs
   var mitt_exports = {};
   __export(mitt_exports, {
@@ -56,6 +226,7 @@
   }
   var init_mitt = __esm({
     "node_modules/mitt/dist/mitt.mjs"() {
+      init_polyfills();
     }
   });
 
@@ -199,12 +370,14 @@
   var defaultGetStoreFunc;
   var init_dist = __esm({
     "node_modules/idb-keyval/dist/index.js"() {
+      init_polyfills();
     }
   });
 
   // node_modules/hyperscript-attribute-to-property/index.js
   var require_hyperscript_attribute_to_property = __commonJS({
     "node_modules/hyperscript-attribute-to-property/index.js"(exports, module) {
+      init_polyfills();
       module.exports = attributeToProperty;
       var transform = {
         "class": "className",
@@ -228,6 +401,7 @@
   // node_modules/hyperx/index.js
   var require_hyperx = __commonJS({
     "node_modules/hyperx/index.js"(exports, module) {
+      init_polyfills();
       var attrToProp = require_hyperscript_attribute_to_property();
       var VAR = 0;
       var TEXT = 1;
@@ -579,6 +753,7 @@
   // node_modules/xou-browser/lib/append-child.js
   var require_append_child = __commonJS({
     "node_modules/xou-browser/lib/append-child.js"(exports, module) {
+      init_polyfills();
       var trailingNewlineRegex = /\n[\s]+$/;
       var leadingNewlineRegex = /^\n[\s]+/;
       var trailingSpaceRegex = /[\s]+$/;
@@ -683,6 +858,7 @@
   // node_modules/xou-utils/lib/svg-tags.js
   var require_svg_tags = __commonJS({
     "node_modules/xou-utils/lib/svg-tags.js"(exports, module) {
+      init_polyfills();
       module.exports = [
         "svg",
         "altGlyph",
@@ -768,6 +944,7 @@
   // node_modules/xou-utils/lib/bool-props.js
   var require_bool_props = __commonJS({
     "node_modules/xou-utils/lib/bool-props.js"(exports, module) {
+      init_polyfills();
       module.exports = [
         "autofocus",
         "checked",
@@ -786,6 +963,7 @@
   // node_modules/xou-utils/index.js
   var require_xou_utils = __commonJS({
     "node_modules/xou-utils/index.js"(exports, module) {
+      init_polyfills();
       module.exports = {
         svgTags: require_svg_tags(),
         boolProps: require_bool_props()
@@ -796,6 +974,7 @@
   // node_modules/xou-browser/lib/index.js
   var require_lib = __commonJS({
     "node_modules/xou-browser/lib/index.js"(exports, module) {
+      init_polyfills();
       var hyperx = require_hyperx();
       var appendChild = require_append_child();
       var { svgTags, boolProps } = require_xou_utils();
@@ -862,6 +1041,7 @@
   // node_modules/xou-server/index.js
   var require_xou_server = __commonJS({
     "node_modules/xou-server/index.js"(exports, module) {
+      init_polyfills();
       var { boolProps } = require_xou_utils();
       var boolPropRx = new RegExp("(" + boolProps.join("|") + `)=["']?$`, "i");
       var handleValue = (value) => {
@@ -919,6 +1099,7 @@
   // node_modules/nanoassert/index.js
   var require_nanoassert = __commonJS({
     "node_modules/nanoassert/index.js"(exports, module) {
+      init_polyfills();
       assert.notEqual = notEqual;
       assert.notOk = notOk;
       assert.equal = equal;
@@ -942,6 +1123,7 @@
   // node_modules/nanomorph/lib/events.js
   var require_events = __commonJS({
     "node_modules/nanomorph/lib/events.js"(exports, module) {
+      init_polyfills();
       module.exports = [
         // attribute events (can be set with attributes)
         "onclick",
@@ -993,6 +1175,7 @@
   // node_modules/nanomorph/lib/morph.js
   var require_morph = __commonJS({
     "node_modules/nanomorph/lib/morph.js"(exports, module) {
+      init_polyfills();
       var events = require_events();
       var eventsLength = events.length;
       var ELEMENT_NODE = 1;
@@ -1131,6 +1314,7 @@
   // node_modules/nanomorph/index.js
   var require_nanomorph = __commonJS({
     "node_modules/nanomorph/index.js"(exports, module) {
+      init_polyfills();
       var assert = require_nanoassert();
       var morph = require_morph();
       var TEXT_NODE = 3;
@@ -1225,6 +1409,7 @@
   // node_modules/xou/index.js
   var require_xou = __commonJS({
     "node_modules/xou/index.js"(exports, module) {
+      init_polyfills();
       module.exports = typeof window !== "undefined" ? require_lib() : require_xou_server();
       module.exports.update = require_nanomorph();
     }
@@ -1233,6 +1418,7 @@
   // node_modules/vxv-hash/dist/vxv-hash.umd.js
   var require_vxv_hash_umd = __commonJS({
     "node_modules/vxv-hash/dist/vxv-hash.umd.js"(exports, module) {
+      init_polyfills();
       !(function(e, n) {
         "object" == typeof exports && "undefined" != typeof module ? n() : "function" == typeof define && define.amd ? define(n) : n();
       })(0, function() {
@@ -1248,6 +1434,7 @@
   // node_modules/vxv-insert/dist/vxv-insert.umd.js
   var require_vxv_insert_umd = __commonJS({
     "node_modules/vxv-insert/dist/vxv-insert.umd.js"(exports, module) {
+      init_polyfills();
       !(function(e, t) {
         "object" == typeof exports && "undefined" != typeof module ? t() : "function" == typeof define && define.amd ? define(t) : t();
       })(0, function() {
@@ -1264,6 +1451,7 @@
   // node_modules/stylis/stylis.js
   var require_stylis = __commonJS({
     "node_modules/stylis/stylis.js"(exports, module) {
+      init_polyfills();
       (function(factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module["exports"] = factory(null) : typeof define === "function" && define["amd"] ? define(factory(null)) : window["stylis"] = factory(null);
       })(
@@ -2591,6 +2779,7 @@
   // node_modules/vxv-parser/dist/vxv-parser.umd.js
   var require_vxv_parser_umd = __commonJS({
     "node_modules/vxv-parser/dist/vxv-parser.umd.js"(exports, module) {
+      init_polyfills();
       !(function(e, n) {
         "object" == typeof exports && "undefined" != typeof module ? n() : "function" == typeof define && define.amd ? define(n) : n();
       })(0, function() {
@@ -2606,6 +2795,7 @@
   // node_modules/vxv-state/dist/vxv-state.umd.js
   var require_vxv_state_umd = __commonJS({
     "node_modules/vxv-state/dist/vxv-state.umd.js"(exports, module) {
+      init_polyfills();
       !(function(e, n) {
         "object" == typeof exports && "undefined" != typeof module ? n() : "function" == typeof define && define.amd ? define(n) : n();
       })(0, function() {
@@ -2622,6 +2812,7 @@
   // node_modules/vxv/dist/vxv.umd.js
   var require_vxv_umd = __commonJS({
     "node_modules/vxv/dist/vxv.umd.js"(exports, module) {
+      init_polyfills();
       !(function(e, r) {
         "object" == typeof exports && "undefined" != typeof module ? r() : "function" == typeof define && define.amd ? define(r) : r();
       })(0, function() {
@@ -2645,6 +2836,7 @@
   var require_shams = __commonJS({
     "node_modules/has-symbols/shams.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = function hasSymbols() {
         if (typeof Symbol !== "function" || typeof Object.getOwnPropertySymbols !== "function") {
           return false;
@@ -2700,6 +2892,7 @@
   var require_shams2 = __commonJS({
     "node_modules/has-tostringtag/shams.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var hasSymbols = require_shams();
       module.exports = function hasToStringTagShams() {
         return hasSymbols() && !!Symbol.toStringTag;
@@ -2711,6 +2904,7 @@
   var require_es_object_atoms = __commonJS({
     "node_modules/es-object-atoms/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Object;
     }
   });
@@ -2719,6 +2913,7 @@
   var require_es_errors = __commonJS({
     "node_modules/es-errors/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Error;
     }
   });
@@ -2727,6 +2922,7 @@
   var require_eval = __commonJS({
     "node_modules/es-errors/eval.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = EvalError;
     }
   });
@@ -2735,6 +2931,7 @@
   var require_range = __commonJS({
     "node_modules/es-errors/range.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = RangeError;
     }
   });
@@ -2743,6 +2940,7 @@
   var require_ref = __commonJS({
     "node_modules/es-errors/ref.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = ReferenceError;
     }
   });
@@ -2751,6 +2949,7 @@
   var require_syntax = __commonJS({
     "node_modules/es-errors/syntax.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = SyntaxError;
     }
   });
@@ -2759,6 +2958,7 @@
   var require_type = __commonJS({
     "node_modules/es-errors/type.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = TypeError;
     }
   });
@@ -2767,6 +2967,7 @@
   var require_uri = __commonJS({
     "node_modules/es-errors/uri.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = URIError;
     }
   });
@@ -2775,6 +2976,7 @@
   var require_abs = __commonJS({
     "node_modules/math-intrinsics/abs.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.abs;
     }
   });
@@ -2783,6 +2985,7 @@
   var require_floor = __commonJS({
     "node_modules/math-intrinsics/floor.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.floor;
     }
   });
@@ -2791,6 +2994,7 @@
   var require_max = __commonJS({
     "node_modules/math-intrinsics/max.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.max;
     }
   });
@@ -2799,6 +3003,7 @@
   var require_min = __commonJS({
     "node_modules/math-intrinsics/min.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.min;
     }
   });
@@ -2807,6 +3012,7 @@
   var require_pow = __commonJS({
     "node_modules/math-intrinsics/pow.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.pow;
     }
   });
@@ -2815,6 +3021,7 @@
   var require_round = __commonJS({
     "node_modules/math-intrinsics/round.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Math.round;
     }
   });
@@ -2823,6 +3030,7 @@
   var require_isNaN = __commonJS({
     "node_modules/math-intrinsics/isNaN.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Number.isNaN || function isNaN2(a) {
         return a !== a;
       };
@@ -2833,6 +3041,7 @@
   var require_sign = __commonJS({
     "node_modules/math-intrinsics/sign.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $isNaN = require_isNaN();
       module.exports = function sign(number) {
         if ($isNaN(number) || number === 0) {
@@ -2847,6 +3056,7 @@
   var require_gOPD = __commonJS({
     "node_modules/gopd/gOPD.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Object.getOwnPropertyDescriptor;
     }
   });
@@ -2855,6 +3065,7 @@
   var require_gopd = __commonJS({
     "node_modules/gopd/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $gOPD = require_gOPD();
       if ($gOPD) {
         try {
@@ -2871,6 +3082,7 @@
   var require_es_define_property = __commonJS({
     "node_modules/es-define-property/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $defineProperty = Object.defineProperty || false;
       if ($defineProperty) {
         try {
@@ -2887,6 +3099,7 @@
   var require_has_symbols = __commonJS({
     "node_modules/has-symbols/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var origSymbol = typeof Symbol !== "undefined" && Symbol;
       var hasSymbolSham = require_shams();
       module.exports = function hasNativeSymbols() {
@@ -2911,6 +3124,7 @@
   var require_Reflect_getPrototypeOf = __commonJS({
     "node_modules/get-proto/Reflect.getPrototypeOf.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = typeof Reflect !== "undefined" && Reflect.getPrototypeOf || null;
     }
   });
@@ -2919,6 +3133,7 @@
   var require_Object_getPrototypeOf = __commonJS({
     "node_modules/get-proto/Object.getPrototypeOf.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $Object = require_es_object_atoms();
       module.exports = $Object.getPrototypeOf || null;
     }
@@ -2928,6 +3143,7 @@
   var require_implementation = __commonJS({
     "node_modules/function-bind/implementation.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var ERROR_MESSAGE = "Function.prototype.bind called on incompatible ";
       var toStr = Object.prototype.toString;
       var max = Math.max;
@@ -3004,6 +3220,7 @@
   var require_function_bind = __commonJS({
     "node_modules/function-bind/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var implementation = require_implementation();
       module.exports = Function.prototype.bind || implementation;
     }
@@ -3013,6 +3230,7 @@
   var require_functionCall = __commonJS({
     "node_modules/call-bind-apply-helpers/functionCall.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Function.prototype.call;
     }
   });
@@ -3021,6 +3239,7 @@
   var require_functionApply = __commonJS({
     "node_modules/call-bind-apply-helpers/functionApply.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = Function.prototype.apply;
     }
   });
@@ -3029,6 +3248,7 @@
   var require_reflectApply = __commonJS({
     "node_modules/call-bind-apply-helpers/reflectApply.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = typeof Reflect !== "undefined" && Reflect && Reflect.apply;
     }
   });
@@ -3037,6 +3257,7 @@
   var require_actualApply = __commonJS({
     "node_modules/call-bind-apply-helpers/actualApply.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var bind = require_function_bind();
       var $apply = require_functionApply();
       var $call = require_functionCall();
@@ -3049,6 +3270,7 @@
   var require_call_bind_apply_helpers = __commonJS({
     "node_modules/call-bind-apply-helpers/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var bind = require_function_bind();
       var $TypeError = require_type();
       var $call = require_functionCall();
@@ -3066,6 +3288,7 @@
   var require_get = __commonJS({
     "node_modules/dunder-proto/get.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var callBind = require_call_bind_apply_helpers();
       var gOPD = require_gopd();
       var hasProtoAccessor;
@@ -3097,6 +3320,7 @@
   var require_get_proto = __commonJS({
     "node_modules/get-proto/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var reflectGetProto = require_Reflect_getPrototypeOf();
       var originalGetProto = require_Object_getPrototypeOf();
       var getDunderProto = require_get();
@@ -3117,6 +3341,7 @@
   var require_hasown = __commonJS({
     "node_modules/hasown/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var call = Function.prototype.call;
       var $hasOwn = Object.prototype.hasOwnProperty;
       var bind = require_function_bind();
@@ -3128,6 +3353,7 @@
   var require_get_intrinsic = __commonJS({
     "node_modules/get-intrinsic/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var undefined2;
       var $Object = require_es_object_atoms();
       var $Error = require_es_errors();
@@ -3459,6 +3685,7 @@
   var require_call_bound = __commonJS({
     "node_modules/call-bound/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var GetIntrinsic = require_get_intrinsic();
       var callBindBasic = require_call_bind_apply_helpers();
       var $indexOf = callBindBasic([GetIntrinsic("%String.prototype.indexOf%")]);
@@ -3482,6 +3709,7 @@
   var require_is_arguments = __commonJS({
     "node_modules/is-arguments/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var hasToStringTag = require_shams2()();
       var callBound = require_call_bound();
       var $toString = callBound("Object.prototype.toString");
@@ -3509,6 +3737,7 @@
   var require_is_regex = __commonJS({
     "node_modules/is-regex/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var callBound = require_call_bound();
       var hasToStringTag = require_shams2()();
       var hasOwn = require_hasown();
@@ -3578,6 +3807,7 @@
   var require_safe_regex_test = __commonJS({
     "node_modules/safe-regex-test/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var callBound = require_call_bound();
       var isRegex = require_is_regex();
       var $exec = callBound("RegExp.prototype.exec");
@@ -3597,6 +3827,7 @@
   var require_generator_function = __commonJS({
     "node_modules/generator-function/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var cached = (
         /** @type {GeneratorFunctionConstructor} */
         function* () {
@@ -3610,6 +3841,7 @@
   var require_is_generator_function = __commonJS({
     "node_modules/is-generator-function/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var callBound = require_call_bound();
       var safeRegexTest = require_safe_regex_test();
       var isFnRegex = safeRegexTest(/^\s*(?:function)?\*/);
@@ -3642,6 +3874,7 @@
   var require_is_callable = __commonJS({
     "node_modules/is-callable/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var fnToStr = Function.prototype.toString;
       var reflectApply = typeof Reflect === "object" && Reflect !== null && Reflect.apply;
       var badArrayLike;
@@ -3760,6 +3993,7 @@
   var require_for_each = __commonJS({
     "node_modules/for-each/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var isCallable = require_is_callable();
       var toStr = Object.prototype.toString;
       var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -3820,6 +4054,7 @@
   var require_possible_typed_array_names = __commonJS({
     "node_modules/possible-typed-array-names/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = [
         "Float16Array",
         "Float32Array",
@@ -3841,6 +4076,7 @@
   var require_available_typed_arrays = __commonJS({
     "node_modules/available-typed-arrays/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var possibleNames = require_possible_typed_array_names();
       var g = typeof globalThis === "undefined" ? global : globalThis;
       module.exports = function availableTypedArrays() {
@@ -3859,6 +4095,7 @@
   var require_define_data_property = __commonJS({
     "node_modules/define-data-property/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $defineProperty = require_es_define_property();
       var $SyntaxError = require_syntax();
       var $TypeError = require_type();
@@ -3907,6 +4144,7 @@
   var require_has_property_descriptors = __commonJS({
     "node_modules/has-property-descriptors/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $defineProperty = require_es_define_property();
       var hasPropertyDescriptors = function hasPropertyDescriptors2() {
         return !!$defineProperty;
@@ -3929,6 +4167,7 @@
   var require_set_function_length = __commonJS({
     "node_modules/set-function-length/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var GetIntrinsic = require_get_intrinsic();
       var define2 = require_define_data_property();
       var hasDescriptors = require_has_property_descriptors()();
@@ -3982,6 +4221,7 @@
   var require_applyBind = __commonJS({
     "node_modules/call-bind-apply-helpers/applyBind.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var bind = require_function_bind();
       var $apply = require_functionApply();
       var actualApply = require_actualApply();
@@ -3995,6 +4235,7 @@
   var require_call_bind = __commonJS({
     "node_modules/call-bind/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var setFunctionLength = require_set_function_length();
       var $defineProperty = require_es_define_property();
       var callBindBasic = require_call_bind_apply_helpers();
@@ -4020,6 +4261,7 @@
   var require_which_typed_array = __commonJS({
     "node_modules/which-typed-array/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var forEach = require_for_each();
       var availableTypedArrays = require_available_typed_arrays();
       var callBind = require_call_bind();
@@ -4141,6 +4383,7 @@
   var require_is_typed_array = __commonJS({
     "node_modules/is-typed-array/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var whichTypedArray = require_which_typed_array();
       module.exports = function isTypedArray(value) {
         return !!whichTypedArray(value);
@@ -4152,6 +4395,7 @@
   var require_types = __commonJS({
     "node_modules/util/support/types.js"(exports) {
       "use strict";
+      init_polyfills();
       var isArgumentsObject = require_is_arguments();
       var isGeneratorFunction = require_is_generator_function();
       var whichTypedArray = require_which_typed_array();
@@ -4381,6 +4625,7 @@
   // node_modules/util/support/isBufferBrowser.js
   var require_isBufferBrowser = __commonJS({
     "node_modules/util/support/isBufferBrowser.js"(exports, module) {
+      init_polyfills();
       module.exports = function isBuffer(arg) {
         return arg && typeof arg === "object" && typeof arg.copy === "function" && typeof arg.fill === "function" && typeof arg.readUInt8 === "function";
       };
@@ -4390,6 +4635,7 @@
   // node_modules/inherits/inherits_browser.js
   var require_inherits_browser = __commonJS({
     "node_modules/inherits/inherits_browser.js"(exports, module) {
+      init_polyfills();
       if (typeof Object.create === "function") {
         module.exports = function inherits(ctor, superCtor) {
           if (superCtor) {
@@ -4422,6 +4668,7 @@
   // node_modules/util/util.js
   var require_util = __commonJS({
     "node_modules/util/util.js"(exports) {
+      init_polyfills();
       var getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors || function getOwnPropertyDescriptors2(obj) {
         var keys2 = Object.keys(obj);
         var descriptors = {};
@@ -4982,6 +5229,7 @@
   var require_suffix_trie = __commonJS({
     "node_modules/tldjs/lib/suffix-trie.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var VALID_HOSTNAME_VALUE = 0;
       function minIndex(a, b) {
         if (a === null) {
@@ -5090,6 +5338,7 @@
   // node_modules/url/node_modules/punycode/punycode.js
   var require_punycode = __commonJS({
     "node_modules/url/node_modules/punycode/punycode.js"(exports, module) {
+      init_polyfills();
       (function(root) {
         var freeExports = typeof exports == "object" && exports && !exports.nodeType && exports;
         var freeModule = typeof module == "object" && module && !module.nodeType && module;
@@ -5336,12 +5585,14 @@
   // (disabled):node_modules/object-inspect/util.inspect
   var require_util2 = __commonJS({
     "(disabled):node_modules/object-inspect/util.inspect"() {
+      init_polyfills();
     }
   });
 
   // node_modules/object-inspect/index.js
   var require_object_inspect = __commonJS({
     "node_modules/object-inspect/index.js"(exports, module) {
+      init_polyfills();
       var hasMap = typeof Map === "function" && Map.prototype;
       var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, "size") : null;
       var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === "function" ? mapSizeDescriptor.get : null;
@@ -5874,6 +6125,7 @@
   var require_side_channel_list = __commonJS({
     "node_modules/side-channel-list/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var inspect = require_object_inspect();
       var $TypeError = require_type();
       var listGetNode = function(list, key, isDelete) {
@@ -5968,6 +6220,7 @@
   var require_side_channel_map = __commonJS({
     "node_modules/side-channel-map/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var GetIntrinsic = require_get_intrinsic();
       var callBound = require_call_bound();
       var inspect = require_object_inspect();
@@ -6024,6 +6277,7 @@
   var require_side_channel_weakmap = __commonJS({
     "node_modules/side-channel-weakmap/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var GetIntrinsic = require_get_intrinsic();
       var callBound = require_call_bound();
       var inspect = require_object_inspect();
@@ -6097,6 +6351,7 @@
   var require_side_channel = __commonJS({
     "node_modules/side-channel/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var $TypeError = require_type();
       var inspect = require_object_inspect();
       var getSideChannelList = require_side_channel_list();
@@ -6136,6 +6391,7 @@
   var require_formats = __commonJS({
     "node_modules/qs/lib/formats.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var replace = String.prototype.replace;
       var percentTwenties = /%20/g;
       var Format = {
@@ -6162,6 +6418,7 @@
   var require_utils = __commonJS({
     "node_modules/qs/lib/utils.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var formats = require_formats();
       var getSideChannel = require_side_channel();
       var has = Object.prototype.hasOwnProperty;
@@ -6424,6 +6681,7 @@
   var require_stringify = __commonJS({
     "node_modules/qs/lib/stringify.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var getSideChannel = require_side_channel();
       var utils = require_utils();
       var formats = require_formats();
@@ -6707,6 +6965,7 @@
   var require_parse = __commonJS({
     "node_modules/qs/lib/parse.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var utils = require_utils();
       var has = Object.prototype.hasOwnProperty;
       var isArray = Array.isArray;
@@ -7004,6 +7263,7 @@
   var require_lib2 = __commonJS({
     "node_modules/qs/lib/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var stringify = require_stringify();
       var parse = require_parse();
       var formats = require_formats();
@@ -7019,6 +7279,7 @@
   var require_url = __commonJS({
     "node_modules/url/url.js"(exports) {
       "use strict";
+      init_polyfills();
       var punycode = require_punycode();
       function Url() {
         this.protocol = null;
@@ -7568,6 +7829,7 @@
   var require_is_valid = __commonJS({
     "node_modules/tldjs/lib/is-valid.js"(exports, module) {
       "use strict";
+      init_polyfills();
       function isDigit(code) {
         return code >= 48 && code <= 57;
       }
@@ -7623,6 +7885,7 @@
   // node_modules/tldjs/lib/clean-host.js
   var require_clean_host = __commonJS({
     "node_modules/tldjs/lib/clean-host.js"(exports, module) {
+      init_polyfills();
       var URL2 = require_url();
       var isValid = require_is_valid();
       var hasPrefixRE = /^(([a-z][a-z0-9+.-]*)?:)?\/\//;
@@ -7679,6 +7942,7 @@
   var require_domain = __commonJS({
     "node_modules/tldjs/lib/domain.js"(exports, module) {
       "use strict";
+      init_polyfills();
       function endsWith(str, pattern) {
         return str.lastIndexOf(pattern) === str.length - pattern.length;
       }
@@ -7718,6 +7982,7 @@
   var require_from_host = __commonJS({
     "node_modules/tldjs/lib/from-host.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = function extractTldFromHost(hostname) {
         var lastDotIndex = hostname.lastIndexOf(".");
         if (lastDotIndex === -1) {
@@ -7732,6 +7997,7 @@
   var require_public_suffix = __commonJS({
     "node_modules/tldjs/lib/public-suffix.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var extractTldFromHost = require_from_host();
       module.exports = function getPublicSuffix(rules, hostname) {
         if (rules.hasTld(hostname)) {
@@ -7750,6 +8016,7 @@
   var require_subdomain = __commonJS({
     "node_modules/tldjs/lib/subdomain.js"(exports, module) {
       "use strict";
+      init_polyfills();
       module.exports = function getSubdomain(hostname, domain) {
         if (domain === null) {
           return null;
@@ -7763,6 +8030,7 @@
   var require_is_ip = __commonJS({
     "node_modules/tldjs/lib/is-ip.js"(exports, module) {
       "use strict";
+      init_polyfills();
       function isProbablyIpv4(hostname) {
         var numberOfDots = 0;
         for (var i = 0; i < hostname.length; i += 1) {
@@ -7804,6 +8072,7 @@
   var require_tld_exists = __commonJS({
     "node_modules/tldjs/lib/tld-exists.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var extractTldFromHost = require_from_host();
       module.exports = function tldExists(rules, hostname) {
         if (rules.hasTld(hostname)) {
@@ -7822,6 +8091,7 @@
   var require_tldjs = __commonJS({
     "node_modules/tldjs/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var deprecate = require_util().deprecate;
       var Trie = require_suffix_trie();
       var allRules = Trie.fromJson(require_rules());
@@ -8074,6 +8344,7 @@
   var DATA_URL_DEFAULT_MIME_TYPE, DATA_URL_DEFAULT_CHARSET, testParameter, supportedProtocols, hasCustomProtocol, normalizeDataURL;
   var init_normalize_url = __esm({
     "node_modules/normalize-url/index.js"() {
+      init_polyfills();
       DATA_URL_DEFAULT_MIME_TYPE = "text/plain";
       DATA_URL_DEFAULT_CHARSET = "us-ascii";
       testParameter = (name, filters) => filters.some((filter) => filter instanceof RegExp ? filter.test(name) : filter === name);
@@ -8131,6 +8402,7 @@
   // src/view/utils/pages.js
   var require_pages = __commonJS({
     "src/view/utils/pages.js"(exports, module) {
+      init_polyfills();
       module.exports = {
         "home.cargo": "./pages/home.html",
         "about.cargo": "./pages/about.html",
@@ -8143,6 +8415,7 @@
   // src/view/utils/isCargoURL.js
   var require_isCargoURL = __commonJS({
     "src/view/utils/isCargoURL.js"(exports, module) {
+      init_polyfills();
       var pages = require_pages();
       module.exports = (url) => {
         if (url.startsWith("file:///")) {
@@ -8160,6 +8433,7 @@
   // src/view/utils/uuid.js
   var require_uuid = __commonJS({
     "src/view/utils/uuid.js"(exports, module) {
+      init_polyfills();
       module.exports = () => {
         if (typeof crypto !== "undefined" && crypto.randomUUID) {
           return crypto.randomUUID();
@@ -8195,6 +8469,7 @@
   // src/view/webview.js
   var require_webview = __commonJS({
     "src/view/webview.js"(exports, module) {
+      init_polyfills();
       var html = require_xou();
       var vxv = require_vxv_umd();
       var { parse } = require_tldjs();
@@ -8461,6 +8736,7 @@
   // src/view/keyboard.js
   var require_keyboard = __commonJS({
     "src/view/keyboard.js"(exports, module) {
+      init_polyfills();
       module.exports = (emitter2, state2) => {
         const handleKeyDown = (ev) => {
           const key = ev.key.toLowerCase();
@@ -8530,6 +8806,7 @@
   // src/view/alert.js
   var require_alert = __commonJS({
     "src/view/alert.js"(exports, module) {
+      init_polyfills();
       var xou = require_xou();
       var vxv = require_vxv_umd();
       var alertStyles = vxv`
@@ -8593,6 +8870,7 @@
   // src/view/menu.js
   var require_menu = __commonJS({
     "src/view/menu.js"(exports, module) {
+      init_polyfills();
       var html = require_xou();
       var vxv = require_vxv_umd();
       var alert = require_alert();
@@ -8680,6 +8958,7 @@ li a {
   var require_vkey = __commonJS({
     "node_modules/vkey/index.js"(exports, module) {
       "use strict";
+      init_polyfills();
       var ua = typeof window !== "undefined" ? window.navigator.userAgent : "";
       var isOSX = /OS X/.test(ua);
       var isOpera = /Opera/.test(ua);
@@ -8810,6 +9089,7 @@ li a {
   // src/view/utils/betterURL.js
   var require_betterURL = __commonJS({
     "src/view/utils/betterURL.js"(exports, module) {
+      init_polyfills();
       var pages = require_pages();
       module.exports = (url) => {
         if (url.startsWith("file:///")) {
@@ -8827,6 +9107,7 @@ li a {
   // src/view/titlebar.js
   var require_titlebar = __commonJS({
     "src/view/titlebar.js"(exports, module) {
+      init_polyfills();
       var html = require_xou();
       var vxv = require_vxv_umd();
       var vkey = require_vkey();
@@ -9016,6 +9297,7 @@ position: relative;
   // src/view/utils/dotify.js
   var require_dotify = __commonJS({
     "src/view/utils/dotify.js"(exports, module) {
+      init_polyfills();
       module.exports = (str, len) => {
         len = len || 25;
         if (str.length > len) {
@@ -9029,6 +9311,7 @@ position: relative;
   // src/view/tabs.js
   var require_tabs = __commonJS({
     "src/view/tabs.js"(exports, module) {
+      init_polyfills();
       var html = require_xou();
       var vxv = require_vxv_umd();
       var alert = require_alert();
@@ -9224,6 +9507,7 @@ li.active {
   // node_modules/nprogress/nprogress.js
   var require_nprogress = __commonJS({
     "node_modules/nprogress/nprogress.js"(exports, module) {
+      init_polyfills();
       (function(root, factory) {
         if (typeof define === "function" && define.amd) {
           define(factory);
@@ -9486,6 +9770,7 @@ li.active {
   // src/view/progress.js
   var require_progress = __commonJS({
     "src/view/progress.js"(exports, module) {
+      init_polyfills();
       var nprogress = require_nprogress();
       module.exports = (emitter2) => {
         nprogress.configure({ showSpinner: false });
@@ -9502,6 +9787,7 @@ li.active {
   // node_modules/dexie/dist/dexie.js
   var require_dexie = __commonJS({
     "node_modules/dexie/dist/dexie.js"(exports, module) {
+      init_polyfills();
       (function(global2, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.Dexie = factory());
       })(exports, (function() {
@@ -15541,6 +15827,7 @@ li.active {
   var import_dexie, DexieSymbol, Dexie, liveQuery, mergeRanges, rangesOverlap, RangeSet, cmp, Entity, PropModification, replacePrefix, add, remove, DexieYProvider, import_wrapper_default;
   var init_import_wrapper = __esm({
     "node_modules/dexie/import-wrapper.mjs"() {
+      init_polyfills();
       import_dexie = __toESM(require_dexie(), 1);
       DexieSymbol = /* @__PURE__ */ Symbol.for("Dexie");
       Dexie = globalThis[DexieSymbol] || (globalThis[DexieSymbol] = import_dexie.default);
@@ -15567,6 +15854,7 @@ li.active {
   // src/view/history.js
   var require_history = __commonJS({
     "src/view/history.js"(exports, module) {
+      init_polyfills();
       var html = require_xou();
       var vxv = require_vxv_umd();
       var alert = require_alert();
@@ -15814,6 +16102,7 @@ li {
   });
 
   // src/view.js
+  init_polyfills();
   var mitt = (init_mitt(), __toCommonJS(mitt_exports));
   var keyval = (init_dist(), __toCommonJS(dist_exports));
   var webview = require_webview();

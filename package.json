@@ -13,7 +13,7 @@
   },
   "scripts": {
     "test": "formatted",
-    "bundle": "esbuild src/view.js --bundle --outfile=src/view.bundle.js --format=iife --platform=browser",
+    "bundle": "esbuild src/view.js --bundle --outfile=src/view.bundle.js --format=iife --platform=browser --inject:src/polyfills.js",
     "start": "npm run bundle && electron .",
     "build": "npm run bundle && electron-builder .",
     "build:win32": "npm run bundle && npm run build -- --win",
@@ -50,6 +50,7 @@
     "electron-reload": "^2.0.0-alpha.1",
     "esbuild": "^0.27.3",
     "formatted": "^1.0.0",
+    "process": "^0.11.10",
     "url": "^0.11.4",
     "util": "^0.12.5"
   },
