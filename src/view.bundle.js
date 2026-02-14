@@ -10038,7 +10038,8 @@ li {
 
   // src/view.js
   init_polyfills();
-  var mitt = (init_mitt(), __toCommonJS(mitt_exports));
+  var mittModule = (init_mitt(), __toCommonJS(mitt_exports));
+  var mitt = mittModule.default || mittModule;
   var keyval = (init_dist(), __toCommonJS(dist_exports));
   var webview = require_webview();
   var keyboard = require_keyboard();

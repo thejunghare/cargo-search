@@ -1,7 +1,9 @@
 // Note: With contextIsolation, we cannot use Node.js built-in modules like 'path'
 // All dependencies must be npm packages that work in the browser/renderer
 
-const mitt = require('mitt');
+// Mitt might export as default or named export depending on bundle format
+const mittModule = require('mitt');
+const mitt = mittModule.default || mittModule;
 const keyval = require('idb-keyval');
 // const Store = require('electron-store');
 
