@@ -9164,36 +9164,34 @@ position: relative;
       var betterUrl = require_betterURL();
       var dotify = require_dotify();
       var styles = vxv`
-top: 68px; /* Push down to clear taller titlebar + spacing */
+top: 54px;
 left: 0px;
 right: 0px;
 position: fixed;
-padding: 0 24px; /* Match titlebar padding */
-background: transparent; /* Transparent track */
-text-align: center;
+padding: 0 16px;
+background: transparent;
+text-align: left;
 margin: 0px;
 border: none;
-transition: opacity .3s;
 
 display: none;
 opacity: 0;
 
 :global(.tabs) {
-border-radius:10px red solid;
   position: fixed;
   left: 0px;
   right: 0px;
   top: 0px;
-  margin-top: 68px;
+  margin-top: 54px;
 }
 
 :global(.simplebar-scrollbar) {
-  border-radius: 4px!important;
-  background-color: rgba(0,0,0,0.1);
+  border-radius: 2px!important;
+  background-color: rgba(0,0,0,0.15);
 }
 
 :global(.simplebar-track.horizontal) {
-  height: 6px;
+  height: 4px;
   background: transparent;
 }
 
@@ -9204,86 +9202,89 @@ ul {
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;
-  text-align: left;
   display: flex;
-  gap: 8px; /* Space between tabs */
+  gap: 4px;
+  align-items: center;
 }
 
 li {
   display: inline-flex;
   align-items: center;
-  width: 200px;
-  padding: 8px 16px;
-  background: rgba(255,255,255,0.7); /* translucent inactive */
-  border: 1px solid transparent;
-  border-radius: 8px 8px 0 0; /* Rounded top */
-  /* OR fully rounded pill: border-radius: 8px; */
-  border-radius: 10px;
-  
-  height: 36px;
-  transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.06);
+  border: none;
+  border-radius: 6px;
+  min-width: 80px;
+  max-width: 160px;
+  height: 28px;
+  transition: all .15s ease;
   position: relative;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  font-size: 11px;
+  font-weight: 400;
   cursor: pointer;
+  color: #666;
 }
 
 li a {
-  color: #5f6368;
-  text-align: left;
+  color: inherit;
   text-decoration: none;
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  pointer-events: none; /* Let parent handle click */
+  pointer-events: none;
 }
 
 li:hover {
-  background: rgba(255,255,255,0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  background: rgba(0,0,0,0.1);
+  color: #333;
 
   .close {
-    opacity: 1;
+    opacity: 0.5;
   }
 }
 
 li.active {
-  background: #FFF;
-  border: 1px solid rgba(0,0,0,0.08);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  color: #1a73e8;
-  z-index: 2;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 
   & a {
-    color: #202124;
-    font-weight: 600;
+    color: #000;
   }
 
+  .close {
+    opacity: 0.5;
+  }
+}
+
+li.active:hover {
   .close {
     opacity: 1;
   }
 }
 
 .close {
-  position: absolute !important;
-  right: 10px;
+  position: absolute;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
   opacity: 0;
-  transition: all .2s;
+  transition: all .15s;
   cursor: pointer;
-  padding: 4px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  font-size: 14px;
-  line-height: 10px;
-  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  color: #888;
   
   &:hover {
     background: rgba(0,0,0,0.1);
-    color: #d93025;
+    color: #333;
   }
 }
 `;
@@ -9294,16 +9295,16 @@ li.active {
         ${state2.views.map((view, id) => {
             const webview2 = document.querySelector(`#${view.id}`);
             const active = view.element.style.display == "block" ? true : false;
-            let title = "Loading";
+            let title = "";
             try {
-              title = dotify(webview2.getTitle());
+              title = dotify(webview2.getTitle(), 20);
             } catch (err) {
             }
             if (title == "" || title == " " || title == void 0) {
-              title = dotify(webview2.getURL());
+              title = dotify(webview2.getURL(), 20);
             }
             if (title == "" || title == " " || title == void 0) {
-              title = dotify(betterUrl(webview2.getAttribute("src")) || "Loading");
+              title = dotify(betterUrl(webview2.getAttribute("src")) || "New Tab", 20);
             }
             let closeClicked = false;
             return html`<li class="${active == true ? "active" : ""}" onclick=${() => {
@@ -9311,18 +9312,21 @@ li.active {
                 emitter2.emit("webview-change", id);
                 emitter2.emit("tabs-render");
               }
-            }}><a class="nav">${title} <span class="close" onclick=${(e) => {
+            }}><a class="nav">${title}</a><span class="close" onclick=${(e) => {
               closeClicked = true;
-              e.preventDefault();
+              e.stopPropagation();
               emitter2.emit("webview-remove", id);
               setTimeout(() => {
                 closeClicked = false;
               }, 10);
-            }}>×</span></a></li>`;
+            }}>×</span></li>`;
           })}
       </ul>
     </div>`;
-          new SimpleBar(el.querySelector(".tabs-bar"));
+          try {
+            new SimpleBar(el.querySelector(".tabs-bar"));
+          } catch (e) {
+          }
           el.style.display = "block";
           el.style.opacity = "1";
           return el;
