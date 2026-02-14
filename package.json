@@ -13,11 +13,12 @@
   },
   "scripts": {
     "test": "formatted",
-    "start": "electron .",
-    "build": "electron-builder .",
-    "build:win32": "npm run build -- --win",
-    "build:mac": "npm run build -- --mac",
-    "build:all": "npm run build -- --all"
+    "bundle": "esbuild src/view.js --bundle --outfile=src/view.bundle.js --format=iife --platform=node --external:electron",
+    "start": "npm run bundle && electron .",
+    "build": "npm run bundle && electron-builder .",
+    "build:win32": "npm run bundle && npm run build -- --win",
+    "build:mac": "npm run bundle && npm run build -- --mac",
+    "build:all": "npm run bundle && npm run build -- --all"
   },
   "keywords": [
     "electron-app",
