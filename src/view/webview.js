@@ -2,8 +2,7 @@ const html = require('xou');
 const vxv = require('vxv');
 const { parse } = require('tldjs');
 const normalizeUrl = require('normalize-url');
-const url = require('url');
-const path = require('path');
+// Note: Removed Node.js 'url' and 'path' modules - using browser APIs instead
 
 const pages = require('./utils/pages');
 const isCargoURL = require('./utils/isCargoURL');
@@ -95,7 +94,7 @@ module.exports = (emitter, state) => {
         return;
       }
 
-      const protocol = url.parse(e.url).protocol;
+      const protocol = new URL(e.url).protocol;
 
       if (e.disposition == 'new-window') {
         // Logic commented out in original, kept as is.

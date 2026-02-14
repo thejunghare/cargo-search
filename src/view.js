@@ -1,5 +1,5 @@
-const path = require('path');
-module.paths.push(path.resolve('../node_modules'));
+// Note: With contextIsolation, we cannot use Node.js built-in modules like 'path'
+// All dependencies must be npm packages that work in the browser/renderer
 
 const mitt = require('mitt');
 const keyval = require('idb-keyval');
