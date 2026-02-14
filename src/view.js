@@ -4,8 +4,26 @@
 // Mitt might export as default or named export depending on bundle format
 const mittModule = require('mitt');
 const mitt = mittModule.default || mittModule;
-const keyval = require('idb-keyval');
-// const Store = require('electron-store');
+
+// Use localStorage for persistence (more reliable in Electron renderer)
+const storage = {
+  get: (key) => {
+    try {
+      const val = localStorage.getItem(key);
+      return Promise.resolve(val ? JSON.parse(val) : undefined);
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  },
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return Promise.resolve();
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+};
 
 const webview = require('./view/webview');
 const keyboard = require('./view/keyboard');
@@ -47,11 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
     urlbar.focus();
   }
 
-  // ✅ FIX: Add type checking to prevent errors
-  keyval.get('tabs').then(val => {
+  // ✅ FIX: Add type checking to prevent errors - use localStorage
+  storage.get('tabs').then(val => {
     // ✅ FIX: Check if val is undefined or not an array
     if (!Array.isArray(val)) {
-      keyval.set('tabs', []);
+      storage.set('tabs', []);
       emitter.emit('webview-create');
       return;
     }
@@ -64,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }).catch(err => {
-    console.error('Error loading tabs from storage:', err);
+    console.warn('Storage unavailable, starting fresh:', err.message);
     // Fallback: create a new tab
     emitter.emit('webview-create');
   });
@@ -81,11 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      keyval.set('tabs', tabs).catch(err => {
-        console.error('Error saving tabs:', err);
+      storage.set('tabs', tabs).catch(err => {
+        // Silently fail - don't spam console
       });
     } catch (err) {
-      console.error('Error in tab save interval:', err);
+      // Silently fail
     }
   }, 500);
 });
@@ -99,7 +117,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 emitter.on('tabs-db-flush', () => {
-  keyval.set('tabs', []).catch(err => {
-    console.error('Error flushing tabs:', err);
+  storage.set('tabs', []).catch(err => {
+    // Silently fail
   });
 });

@@ -220,150 +220,6 @@
     }
   });
 
-  // node_modules/idb-keyval/dist/index.js
-  var dist_exports = {};
-  __export(dist_exports, {
-    clear: () => clear,
-    createStore: () => createStore,
-    del: () => del,
-    delMany: () => delMany,
-    entries: () => entries,
-    get: () => get,
-    getMany: () => getMany,
-    keys: () => keys,
-    promisifyRequest: () => promisifyRequest,
-    set: () => set,
-    setMany: () => setMany,
-    update: () => update,
-    values: () => values
-  });
-  function promisifyRequest(request) {
-    return new Promise((resolve, reject) => {
-      request.oncomplete = request.onsuccess = () => resolve(request.result);
-      request.onabort = request.onerror = () => reject(request.error);
-    });
-  }
-  function createStore(dbName, storeName) {
-    let dbp;
-    const getDB = () => {
-      if (dbp)
-        return dbp;
-      const request = indexedDB.open(dbName);
-      request.onupgradeneeded = () => request.result.createObjectStore(storeName);
-      dbp = promisifyRequest(request);
-      dbp.then((db) => {
-        db.onclose = () => dbp = void 0;
-      }, () => {
-      });
-      return dbp;
-    };
-    return (txMode, callback) => getDB().then((db) => callback(db.transaction(storeName, txMode).objectStore(storeName)));
-  }
-  function defaultGetStore() {
-    if (!defaultGetStoreFunc) {
-      defaultGetStoreFunc = createStore("keyval-store", "keyval");
-    }
-    return defaultGetStoreFunc;
-  }
-  function get(key, customStore = defaultGetStore()) {
-    return customStore("readonly", (store) => promisifyRequest(store.get(key)));
-  }
-  function set(key, value, customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => {
-      store.put(value, key);
-      return promisifyRequest(store.transaction);
-    });
-  }
-  function setMany(entries2, customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => {
-      entries2.forEach((entry) => store.put(entry[1], entry[0]));
-      return promisifyRequest(store.transaction);
-    });
-  }
-  function getMany(keys2, customStore = defaultGetStore()) {
-    return customStore("readonly", (store) => Promise.all(keys2.map((key) => promisifyRequest(store.get(key)))));
-  }
-  function update(key, updater, customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => (
-      // Need to create the promise manually.
-      // If I try to chain promises, the transaction closes in browsers
-      // that use a promise polyfill (IE10/11).
-      new Promise((resolve, reject) => {
-        store.get(key).onsuccess = function() {
-          try {
-            store.put(updater(this.result), key);
-            resolve(promisifyRequest(store.transaction));
-          } catch (err) {
-            reject(err);
-          }
-        };
-      })
-    ));
-  }
-  function del(key, customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => {
-      store.delete(key);
-      return promisifyRequest(store.transaction);
-    });
-  }
-  function delMany(keys2, customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => {
-      keys2.forEach((key) => store.delete(key));
-      return promisifyRequest(store.transaction);
-    });
-  }
-  function clear(customStore = defaultGetStore()) {
-    return customStore("readwrite", (store) => {
-      store.clear();
-      return promisifyRequest(store.transaction);
-    });
-  }
-  function eachCursor(store, callback) {
-    store.openCursor().onsuccess = function() {
-      if (!this.result)
-        return;
-      callback(this.result);
-      this.result.continue();
-    };
-    return promisifyRequest(store.transaction);
-  }
-  function keys(customStore = defaultGetStore()) {
-    return customStore("readonly", (store) => {
-      if (store.getAllKeys) {
-        return promisifyRequest(store.getAllKeys());
-      }
-      const items = [];
-      return eachCursor(store, (cursor) => items.push(cursor.key)).then(() => items);
-    });
-  }
-  function values(customStore = defaultGetStore()) {
-    return customStore("readonly", (store) => {
-      if (store.getAll) {
-        return promisifyRequest(store.getAll());
-      }
-      const items = [];
-      return eachCursor(store, (cursor) => items.push(cursor.value)).then(() => items);
-    });
-  }
-  function entries(customStore = defaultGetStore()) {
-    return customStore("readonly", (store) => {
-      if (store.getAll && store.getAllKeys) {
-        return Promise.all([
-          promisifyRequest(store.getAllKeys()),
-          promisifyRequest(store.getAll())
-        ]).then(([keys2, values2]) => keys2.map((key, i) => [key, values2[i]]));
-      }
-      const items = [];
-      return customStore("readonly", (store2) => eachCursor(store2, (cursor) => items.push([cursor.key, cursor.value])).then(() => items));
-    });
-  }
-  var defaultGetStoreFunc;
-  var init_dist = __esm({
-    "node_modules/idb-keyval/dist/index.js"() {
-      init_polyfills();
-    }
-  });
-
   // node_modules/hyperscript-attribute-to-property/index.js
   var require_hyperscript_attribute_to_property = __commonJS({
     "node_modules/hyperscript-attribute-to-property/index.js"(exports, module) {
@@ -2678,7 +2534,7 @@
             }
             return use;
           }
-          function set2(options2) {
+          function set(options2) {
             for (var name in options2) {
               var value = options2[name];
               switch (name) {
@@ -2712,7 +2568,7 @@
                   }
               }
             }
-            return set2;
+            return set;
           }
           function stylis(selector, input) {
             if (this !== void 0 && this.constructor === stylis) {
@@ -2756,9 +2612,9 @@
             return compress * code === 0 ? output : minify(output);
           }
           stylis["use"] = use;
-          stylis["set"] = set2;
+          stylis["set"] = set;
           if (options !== void 0) {
-            set2(options);
+            set(options);
           }
           return stylis;
         }
@@ -4660,10 +4516,10 @@
     "node_modules/util/util.js"(exports) {
       init_polyfills();
       var getOwnPropertyDescriptors = Object.getOwnPropertyDescriptors || function getOwnPropertyDescriptors2(obj) {
-        var keys2 = Object.keys(obj);
+        var keys = Object.keys(obj);
         var descriptors = {};
-        for (var i = 0; i < keys2.length; i++) {
-          descriptors[keys2[i]] = Object.getOwnPropertyDescriptor(obj, keys2[i]);
+        for (var i = 0; i < keys.length; i++) {
+          descriptors[keys[i]] = Object.getOwnPropertyDescriptor(obj, keys[i]);
         }
         return descriptors;
       };
@@ -4739,21 +4595,21 @@
         debugEnvRegex = new RegExp("^" + debugEnv + "$", "i");
       }
       var debugEnv;
-      exports.debuglog = function(set2) {
-        set2 = set2.toUpperCase();
-        if (!debugs[set2]) {
-          if (debugEnvRegex.test(set2)) {
+      exports.debuglog = function(set) {
+        set = set.toUpperCase();
+        if (!debugs[set]) {
+          if (debugEnvRegex.test(set)) {
             var pid = process.pid;
-            debugs[set2] = function() {
+            debugs[set] = function() {
               var msg = exports.format.apply(exports, arguments);
-              console.error("%s %d: %s", set2, pid, msg);
+              console.error("%s %d: %s", set, pid, msg);
             };
           } else {
-            debugs[set2] = function() {
+            debugs[set] = function() {
             };
           }
         }
-        return debugs[set2];
+        return debugs[set];
       };
       function inspect(obj, opts) {
         var ctx = {
@@ -4833,15 +4689,15 @@
         if (primitive) {
           return primitive;
         }
-        var keys2 = Object.keys(value);
-        var visibleKeys = arrayToHash(keys2);
+        var keys = Object.keys(value);
+        var visibleKeys = arrayToHash(keys);
         if (ctx.showHidden) {
-          keys2 = Object.getOwnPropertyNames(value);
+          keys = Object.getOwnPropertyNames(value);
         }
-        if (isError(value) && (keys2.indexOf("message") >= 0 || keys2.indexOf("description") >= 0)) {
+        if (isError(value) && (keys.indexOf("message") >= 0 || keys.indexOf("description") >= 0)) {
           return formatError(value);
         }
-        if (keys2.length === 0) {
+        if (keys.length === 0) {
           if (isFunction(value)) {
             var name = value.name ? ": " + value.name : "";
             return ctx.stylize("[Function" + name + "]", "special");
@@ -4874,7 +4730,7 @@
         if (isError(value)) {
           base = " " + formatError(value);
         }
-        if (keys2.length === 0 && (!array || value.length == 0)) {
+        if (keys.length === 0 && (!array || value.length == 0)) {
           return braces[0] + base + braces[1];
         }
         if (recurseTimes < 0) {
@@ -4887,9 +4743,9 @@
         ctx.seen.push(value);
         var output;
         if (array) {
-          output = formatArray(ctx, value, recurseTimes, visibleKeys, keys2);
+          output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
         } else {
-          output = keys2.map(function(key) {
+          output = keys.map(function(key) {
             return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
           });
         }
@@ -4913,7 +4769,7 @@
       function formatError(value) {
         return "[" + Error.prototype.toString.call(value) + "]";
       }
-      function formatArray(ctx, value, recurseTimes, visibleKeys, keys2) {
+      function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
         var output = [];
         for (var i = 0, l = value.length; i < l; ++i) {
           if (hasOwnProperty(value, String(i))) {
@@ -4929,7 +4785,7 @@
             output.push("");
           }
         }
-        keys2.forEach(function(key) {
+        keys.forEach(function(key) {
           if (!key.match(/^\d+$/)) {
             output.push(formatProperty(
               ctx,
@@ -5106,10 +4962,10 @@
       exports.inherits = require_inherits_browser();
       exports._extend = function(origin, add) {
         if (!add || !isObject(add)) return origin;
-        var keys2 = Object.keys(add);
-        var i = keys2.length;
+        var keys = Object.keys(add);
+        var i = keys.length;
         while (i--) {
-          origin[keys2[i]] = add[keys2[i]];
+          origin[keys[i]] = add[keys[i]];
         }
         return origin;
       };
@@ -5720,8 +5576,8 @@
         }
         if (typeof obj === "function" && !isRegExp(obj)) {
           var name = nameOf(obj);
-          var keys2 = arrObjKeys(obj, inspect);
-          return "[Function" + (name ? ": " + name : " (anonymous)") + "]" + (keys2.length > 0 ? " { " + $join.call(keys2, ", ") + " }" : "");
+          var keys = arrObjKeys(obj, inspect);
+          return "[Function" + (name ? ": " + name : " (anonymous)") + "]" + (keys.length > 0 ? " { " + $join.call(keys, ", ") + " }" : "");
         }
         if (isSymbol(obj)) {
           var symString = hasShammedSymbols ? $replace.call(String(obj), /^(Symbol\(.*\))_[^)]*$/, "$1") : symToString.call(obj);
@@ -6034,8 +5890,8 @@
       function weakCollectionOf(type) {
         return type + " { ? }";
       }
-      function collectionOf(type, size, entries2, indent) {
-        var joinedEntries = indent ? indentedJoin(entries2, indent) : $join.call(entries2, ", ");
+      function collectionOf(type, size, entries, indent) {
+        var joinedEntries = indent ? indentedJoin(entries, indent) : $join.call(entries, ", ");
         return type + " (" + size + ") {" + joinedEntries + "}";
       }
       function singleLineValues(xs) {
@@ -6605,9 +6461,9 @@
         for (var i = 0; i < queue.length; ++i) {
           var item = queue[i];
           var obj = item.obj[item.prop];
-          var keys2 = Object.keys(obj);
-          for (var j = 0; j < keys2.length; ++j) {
-            var key = keys2[j];
+          var keys = Object.keys(obj);
+          for (var j = 0; j < keys.length; ++j) {
+            var key = keys[j];
             var val = obj[key];
             if (typeof val === "object" && val !== null && refs.indexOf(val) === -1) {
               queue[queue.length] = { obj, prop: key };
@@ -6767,9 +6623,9 @@
           }
           return [formatter(prefix) + "=" + formatter(String(obj))];
         }
-        var values2 = [];
+        var values = [];
         if (typeof obj === "undefined") {
-          return values2;
+          return values;
         }
         var objKeys;
         if (generateArrayPrefix === "comma" && isArray(obj)) {
@@ -6780,8 +6636,8 @@
         } else if (isArray(filter)) {
           objKeys = filter;
         } else {
-          var keys2 = Object.keys(obj);
-          objKeys = sort ? keys2.sort(sort) : keys2;
+          var keys = Object.keys(obj);
+          objKeys = sort ? keys.sort(sort) : keys;
         }
         var encodedPrefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
         var adjustedPrefix = commaRoundTrip && isArray(obj) && obj.length === 1 ? encodedPrefix + "[]" : encodedPrefix;
@@ -6799,7 +6655,7 @@
           sideChannel.set(object, step);
           var valueSideChannel = getSideChannel();
           valueSideChannel.set(sentinel, sideChannel);
-          pushToArray(values2, stringify2(
+          pushToArray(values, stringify2(
             value,
             keyPrefix,
             generateArrayPrefix,
@@ -6820,7 +6676,7 @@
             valueSideChannel
           ));
         }
-        return values2;
+        return values;
       };
       var normalizeStringifyOptions = function normalizeStringifyOptions2(opts) {
         if (!opts) {
@@ -6897,7 +6753,7 @@
           filter = options.filter;
           objKeys = filter;
         }
-        var keys2 = [];
+        var keys = [];
         if (typeof obj !== "object" || obj === null) {
           return "";
         }
@@ -6916,7 +6772,7 @@
           if (options.skipNulls && value === null) {
             continue;
           }
-          pushToArray(keys2, stringify(
+          pushToArray(keys, stringify(
             value,
             key,
             generateArrayPrefix,
@@ -6937,7 +6793,7 @@
             sideChannel
           ));
         }
-        var joined = keys2.join(options.delimiter);
+        var joined = keys.join(options.delimiter);
         var prefix = options.addQueryPrefix === true ? "?" : "";
         if (options.charsetSentinel) {
           if (options.charset === "iso-8859-1") {
@@ -7140,14 +6996,14 @@
         var child = /(\[[^[\]]*])/g;
         var segment = brackets.exec(key);
         var parent = segment ? key.slice(0, segment.index) : key;
-        var keys2 = [];
+        var keys = [];
         if (parent) {
           if (!options.plainObjects && has.call(Object.prototype, parent)) {
             if (!options.allowPrototypes) {
               return;
             }
           }
-          keys2[keys2.length] = parent;
+          keys[keys.length] = parent;
         }
         var i = 0;
         while ((segment = child.exec(key)) !== null && i < options.depth) {
@@ -7158,25 +7014,25 @@
               return;
             }
           }
-          keys2[keys2.length] = segment[1];
+          keys[keys.length] = segment[1];
         }
         if (segment) {
           if (options.strictDepth === true) {
             throw new RangeError("Input depth exceeded depth option of " + options.depth + " and strictDepth is true");
           }
-          keys2[keys2.length] = "[" + key.slice(segment.index) + "]";
+          keys[keys.length] = "[" + key.slice(segment.index) + "]";
         }
-        return keys2;
+        return keys;
       };
       var parseKeys = function parseQueryStringKeys(givenKey, val, options, valuesParsed) {
         if (!givenKey) {
           return;
         }
-        var keys2 = splitKeyIntoSegments(givenKey, options);
-        if (!keys2) {
+        var keys = splitKeyIntoSegments(givenKey, options);
+        if (!keys) {
           return;
         }
-        return parseObject(keys2, val, options, valuesParsed);
+        return parseObject(keys, val, options, valuesParsed);
       };
       var normalizeParseOptions = function normalizeParseOptions2(opts) {
         if (!opts) {
@@ -7235,9 +7091,9 @@
         }
         var tempObj = typeof str === "string" ? parseValues(str, options) : str;
         var obj = options.plainObjects ? { __proto__: null } : {};
-        var keys2 = Object.keys(tempObj);
-        for (var i = 0; i < keys2.length; ++i) {
-          var key = keys2[i];
+        var keys = Object.keys(tempObj);
+        for (var i = 0; i < keys.length; ++i) {
+          var key = keys[i];
           var newObj = parseKeys(key, tempObj[key], options, typeof str === "string");
           obj = utils.merge(obj, newObj, options);
         }
@@ -7625,9 +7481,9 @@
         }
         if (relative.protocol && relative.protocol !== result.protocol) {
           if (!slashedProtocol[relative.protocol]) {
-            var keys2 = Object.keys(relative);
-            for (var v = 0; v < keys2.length; v++) {
-              var k = keys2[v];
+            var keys = Object.keys(relative);
+            for (var v = 0; v < keys.length; v++) {
+              var k = keys[v];
               result[k] = relative[k];
             }
             result.href = result.format();
@@ -9782,18 +9638,35 @@ li.active {
       var vxv = require_vxv_umd();
       var alert = require_alert();
       var dotify = require_dotify();
-      var keyval2 = (init_dist(), __toCommonJS(dist_exports));
+      var storage2 = {
+        get: (key) => {
+          try {
+            const val = localStorage.getItem(key);
+            return Promise.resolve(val ? JSON.parse(val) : []);
+          } catch (e) {
+            return Promise.resolve([]);
+          }
+        },
+        set: (key, value) => {
+          try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return Promise.resolve();
+          } catch (e) {
+            return Promise.resolve();
+          }
+        }
+      };
       var db = {
         visit: {
           add: async (data) => {
-            const visits = await keyval2.get("history") || [];
+            const visits = await storage2.get("history");
             visits.unshift({ ...data, id: Date.now() });
-            await keyval2.set("history", visits);
+            await storage2.set("history", visits);
           },
           orderBy: () => ({
             reverse: () => ({
               toArray: async () => {
-                return await keyval2.get("history") || [];
+                return await storage2.get("history");
               }
             })
           })
@@ -10040,7 +9913,24 @@ li {
   init_polyfills();
   var mittModule = (init_mitt(), __toCommonJS(mitt_exports));
   var mitt = mittModule.default || mittModule;
-  var keyval = (init_dist(), __toCommonJS(dist_exports));
+  var storage = {
+    get: (key) => {
+      try {
+        const val = localStorage.getItem(key);
+        return Promise.resolve(val ? JSON.parse(val) : void 0);
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    },
+    set: (key, value) => {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return Promise.resolve();
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+  };
   var webview = require_webview();
   var keyboard = require_keyboard();
   var menu = require_menu();
@@ -10071,9 +9961,9 @@ li {
     if (urlbar) {
       urlbar.focus();
     }
-    keyval.get("tabs").then((val) => {
+    storage.get("tabs").then((val) => {
       if (!Array.isArray(val)) {
-        keyval.set("tabs", []);
+        storage.set("tabs", []);
         emitter.emit("webview-create");
         return;
       }
@@ -10085,7 +9975,7 @@ li {
         }
       }
     }).catch((err) => {
-      console.error("Error loading tabs from storage:", err);
+      console.warn("Storage unavailable, starting fresh:", err.message);
       emitter.emit("webview-create");
     });
     state.tabsInterval = setInterval(() => {
@@ -10097,11 +9987,9 @@ li {
             tabs2.push(webviewEl.getURL());
           }
         }
-        keyval.set("tabs", tabs2).catch((err) => {
-          console.error("Error saving tabs:", err);
+        storage.set("tabs", tabs2).catch((err) => {
         });
       } catch (err) {
-        console.error("Error in tab save interval:", err);
       }
     }, 500);
   });
@@ -10112,8 +10000,7 @@ li {
     }
   });
   emitter.on("tabs-db-flush", () => {
-    keyval.set("tabs", []).catch((err) => {
-      console.error("Error flushing tabs:", err);
+    storage.set("tabs", []).catch((err) => {
     });
   });
 })();

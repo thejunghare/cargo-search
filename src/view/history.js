@@ -3,20 +3,37 @@ const vxv = require('vxv');
 const alert = require('./alert.js');
 const dotify = require('./utils/dotify');
 
-// Using idb-keyval for IndexedDB (browser-compatible, already in dependencies)
-const keyval = require('idb-keyval');
+// Use localStorage for history (reliable in Electron renderer)
+const storage = {
+  get: (key) => {
+    try {
+      const val = localStorage.getItem(key);
+      return Promise.resolve(val ? JSON.parse(val) : []);
+    } catch (e) {
+      return Promise.resolve([]);
+    }
+  },
+  set: (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return Promise.resolve();
+    } catch (e) {
+      return Promise.resolve();
+    }
+  }
+};
 
 let db = {
   visit: {
     add: async (data) => {
-      const visits = await keyval.get('history') || [];
+      const visits = await storage.get('history');
       visits.unshift({ ...data, id: Date.now() });
-      await keyval.set('history', visits);
+      await storage.set('history', visits);
     },
     orderBy: () => ({
       reverse: () => ({
         toArray: async () => {
-          return await keyval.get('history') || [];
+          return await storage.get('history');
         }
       })
     })
