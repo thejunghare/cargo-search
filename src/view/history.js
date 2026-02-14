@@ -3,7 +3,25 @@ const vxv = require('vxv');
 const alert = require('./alert.js');
 const dotify = require('./utils/dotify');
 
-const Dexie = require('dexie');
+// Using idb-keyval for IndexedDB (browser-compatible, already in dependencies)
+const keyval = require('idb-keyval');
+
+let db = {
+  visit: {
+    add: async (data) => {
+      const visits = await keyval.get('history') || [];
+      visits.unshift({ ...data, id: Date.now() });
+      await keyval.set('history', visits);
+    },
+    orderBy: () => ({
+      reverse: () => ({
+        toArray: async () => {
+          return await keyval.get('history') || [];
+        }
+      })
+    })
+  }
+};
 
 // --- MODERN "GLASS" CSS ---
 const styles = vxv`
@@ -142,12 +160,6 @@ const overlayStyles = vxv`
 let toggle = false;
 let a = () => { };
 
-const db = new Dexie('history');
-
-db.version(1).stores({
-  visit: 'url, title, timestamp'
-});
-
 const getGroupTitle = (timestamp) => {
   const date = new Date(timestamp);
   const now = new Date();
@@ -193,7 +205,7 @@ module.exports = emitter => {
         container.innerHTML = ''; // Clear previous content
 
         // ✅ FIX: Add error handling for database operations
-        db.visit.orderBy('timestamp').reverse().toArray()
+        db.visit.orderBy().reverse().toArray()
           .then(visits => {
             const groups = {};
 
