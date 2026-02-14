@@ -5,13 +5,36 @@ const normalizeUrl = require('normalize-url');
 const url = require('url');
 const path = require('path');
 
-// ✅ FIX 1: Correct Modern Electron Imports
-const remote = require('@electron/remote');
-const { BrowserWindow } = remote;
-
 const pages = require('./utils/pages');
 const isCargoURL = require('./utils/isCargoURL');
 const uuid = require('./utils/uuid');
+
+// ✅ SECURITY: Whitelist of allowed protocols
+const ALLOWED_PROTOCOLS = ['http:', 'https:', 'file:', 'data:'];
+const DANGEROUS_PROTOCOLS = ['javascript:', 'vbscript:', 'data:', 'file:'];
+
+// ✅ SECURITY: URL validation function
+const isValidUrl = (urlString) => {
+  try {
+    const parsed = new URL(urlString);
+    
+    // Check against dangerous protocols
+    if (DANGEROUS_PROTOCOLS.includes(parsed.protocol)) {
+      console.warn(`Blocked navigation to dangerous protocol: ${parsed.protocol}`);
+      return false;
+    }
+    
+    // Only allow safe protocols
+    if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+      console.warn(`Blocked navigation to unsupported protocol: ${parsed.protocol}`);
+      return false;
+    }
+    
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 module.exports = (emitter, state) => {
   let focusedView = -1;
@@ -65,18 +88,28 @@ module.exports = (emitter, state) => {
   const newWindow = e => {
     e.preventDefault();
 
-    const protocol = url.parse(e.url).protocol;
+    try {
+      // ✅ SECURITY: Validate URL before opening in new tab
+      if (!e.url || !isValidUrl(e.url)) {
+        console.warn('Blocked new window with invalid/dangerous URL:', e.url);
+        return;
+      }
 
-    if (e.disposition == 'new-window') {
-      // Logic commented out in original, kept as is.
-      // If uncommented later, ensure BrowserWindow is used from 'remote'
-    } else if (
-      e.disposition == 'foreground-tab' ||
-      e.disposition == 'background-tab' ||
-      e.disposition == 'default' ||
-      e.disposition == 'other'
-    ) {
-      emitter.emit('tabs-create', e.url);
+      const protocol = url.parse(e.url).protocol;
+
+      if (e.disposition == 'new-window') {
+        // Logic commented out in original, kept as is.
+        // If uncommented later, ensure BrowserWindow is used from 'remote'
+      } else if (
+        e.disposition == 'foreground-tab' ||
+        e.disposition == 'background-tab' ||
+        e.disposition == 'default' ||
+        e.disposition == 'other'
+      ) {
+        emitter.emit('tabs-create', e.url);
+      }
+    } catch (err) {
+      console.error('Error handling new window:', err);
     }
   };
 
@@ -129,8 +162,8 @@ module.exports = (emitter, state) => {
     return state.views.length - 1;
   };
 
-  const remove = id => {
-    const el = state.views[id];
+  const remove = viewIndex => {
+    const el = state.views[viewIndex];
 
     const webview = document.querySelector(`#${el.id}`);
 
@@ -142,7 +175,7 @@ module.exports = (emitter, state) => {
     webview.removeEventListener('did-fail-load', loadingError);
     // webview.removeEventListener('new-window', newWindow);
 
-    state.views.splice(id, 1);
+    state.views.splice(viewIndex, 1);
     focusedView = 0;
 
     el.element.remove();
@@ -150,18 +183,18 @@ module.exports = (emitter, state) => {
     if (state.views.length == 0) {
       emitter.emit('tabs-db-flush');
 
-      // ✅ FIX 2: Use the already imported 'remote' (Removed the crash here)
-      let w = remote.getCurrentWindow();
-      w.close();
+      // ✅ FIX: Use window.close() instead of remote
+      window.close();
     }
 
-    id = id - 1;
+    // ✅ FIX: Use different variable name to avoid shadowing
+    let newIndex = viewIndex - 1;
 
-    if (id < 0) {
-      id = 0;
+    if (newIndex < 0) {
+      newIndex = 0;
     }
 
-    changeView(id);
+    changeView(newIndex);
   };
   /*
     DarkMode 
@@ -231,32 +264,76 @@ module.exports = (emitter, state) => {
   });
 
   emitter.on('navigate', options => {
-    const webview = document.querySelector(`#${state.views[focusedView].id}`);
-    webview.focus();
+    try {
+      const webview = document.querySelector(`#${state.views[focusedView].id}`);
+      if (!webview) {
+        console.error('No webview found for navigation');
+        return;
+      }
+      webview.focus();
 
-    let slug = options.slug;
-    const url = normalizeUrl(slug);
-    const parsed = parse(url, true);
+      let slug = options.slug;
 
-    if (url.startsWith('file:///')) {
-      return webview.loadURL(slug);
-    }
+      // ✅ SECURITY: Validate URL before any processing
+      if (!slug || typeof slug !== 'string') {
+        console.error('Invalid URL provided:', slug);
+        return;
+      }
 
-    if (!slug.startsWith('http://') && !slug.startsWith('https://')) {
-      slug = 'http://' + slug;
-    }
+      // Trim whitespace
+      slug = slug.trim();
 
-    if (parsed.domain != null && parsed.isValid == true) {
-      if (pages[parsed.domain] != null) {
-        webview.setAttribute('src', pages[parsed.domain]);
+      // ✅ SECURITY: Check for dangerous protocols before normalization
+      const lowerSlug = slug.toLowerCase();
+      if (lowerSlug.startsWith('javascript:') || 
+          lowerSlug.startsWith('vbscript:') || 
+          lowerSlug.startsWith('data:')) {
+        console.warn('Blocked navigation to dangerous protocol in URL:', slug);
+        return;
+      }
+
+      // ✅ SECURITY: Only allow file:// URLs for internal pages
+      if (slug.startsWith('file:///')) {
+        // Validate it's one of our internal pages
+        const isInternalPage = Object.values(pages).some(page => 
+          slug.includes(page)
+        );
+        
+        if (isInternalPage) {
+          return webview.loadURL(slug);
+        } else {
+          console.warn('Blocked navigation to unauthorized file:', slug);
+          return;
+        }
+      }
+
+      const url = normalizeUrl(slug);
+      const parsed = parse(url, true);
+
+      // ✅ SECURITY: Final validation before navigation
+      if (!isValidUrl(url)) {
+        console.warn('URL failed validation:', url);
+        return;
+      }
+
+      if (!slug.startsWith('http://') && !slug.startsWith('https://')) {
+        slug = 'http://' + slug;
+      }
+
+      if (parsed.domain != null && parsed.isValid == true) {
+        if (pages[parsed.domain] != null) {
+          webview.setAttribute('src', pages[parsed.domain]);
+        } else {
+          webview.loadURL(slug);
+        }
       } else {
+        slug = options.expand
+          ? `http://www.${options.slug}.com`
+          : `https://duckduckgo.com/?q=${encodeURIComponent(options.slug)}`;
         webview.loadURL(slug);
       }
-    } else {
-      slug = options.expand
-        ? `http://www.${options.slug}.com`
-        : `https://duckduckgo.com/?q=${options.slug}`;
-      webview.loadURL(slug);
+    } catch (err) {
+      console.error('Error during navigation:', err);
     }
   });
 

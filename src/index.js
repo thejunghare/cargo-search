@@ -8,19 +8,19 @@ const window = require('./window');
 const path = require('path');
 
 // Add this block
-require('electron-reload')(__dirname, {
-  // This tells it to watch for changes in the 'src' folder
-  // and hard-reset the app if the main file changes.
-  electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
-});
+if (isDev) {
+  require('electron-reload')(__dirname, {
+    // This tells it to watch for changes in the 'src' folder
+    // and hard-reset the app if the main file changes.
+    electron: path.join(__dirname, '../node_modules', '.bin', 'electron')
+  });
+}
 
 
 // ? for hot reload end
 
-// 1. IMPORT AND INITIALIZE REMOTE MODULE
-// This creates the internal "server" that listens for commands from the window
-const remoteMain = require('@electron/remote/main');
-remoteMain.initialize();
+// ✅ SECURITY: Removed @electron/remote module
+// All communication now happens through contextBridge/preload script
 
 require('events').EventEmitter.prototype._maxListeners = 100;
 
@@ -47,16 +47,10 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (!mainWindow) {
     mainWindow = window(onClosed);
-    // 2. ENABLE REMOTE FOR THE WINDOW
-    // This gives the specific window permission to talk to the main process
-    remoteMain.enable(mainWindow.webContents);
   }
 });
 
-// ! Fix - Uncaught TypeError: Cannot read properties of undefined (reading 'getCurrentWindow')at HTMLDocument.installTitlebar 
+// ✅ SECURITY: Removed remoteMain.enable calls
 app.on('ready', () => {
   mainWindow = window(onClosed);
-  // 3. ENABLE REMOTE FOR THE WINDOW
-  // (We must do this every time the window is created)
-  remoteMain.enable(mainWindow.webContents);
 });

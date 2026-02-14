@@ -20,48 +20,84 @@ const emitter = mitt();
 const state = {
   url: 'https://home.cargo',
   views: [],
-  theme: 'light'
+  theme: 'light',
+  tabsInterval: null // Store interval ID for cleanup
   // store
 };
 
-titlebar(emitter, state);
-progress(emitter);
-history(emitter);
-webview(emitter, state);
-menu(emitter, state);
-keyboard(emitter, state);
-// onboarding(emitter, state);
+// ✅ FIX: Initialize components when DOM is ready to avoid race conditions
+document.addEventListener('DOMContentLoaded', () => {
+  titlebar(emitter, state);
+  progress(emitter);
+  history(emitter);
+  webview(emitter, state);
+  menu(emitter, state);
+  keyboard(emitter, state);
+  // onboarding(emitter, state);
 
-setTimeout(() => {
-  tabs(emitter, state);
-}, 200);
+  setTimeout(() => {
+    tabs(emitter, state);
+  }, 200);
 
-document.querySelector('.urlbar').focus();
-
-keyval.get('tabs').then(val => {
-  if (val == undefined) {
-    keyval.set('tabs', []);
+  // ✅ FIX: Focus after DOM is ready
+  const urlbar = document.querySelector('.urlbar');
+  if (urlbar) {
+    urlbar.focus();
   }
 
-  if (val.length == 0) {
-    emitter.emit('webview-create');
-  } else {
-    for (let v of val) {
-      emitter.emit('webview-create', v);
+  // ✅ FIX: Add type checking to prevent errors
+  keyval.get('tabs').then(val => {
+    // ✅ FIX: Check if val is undefined or not an array
+    if (!Array.isArray(val)) {
+      keyval.set('tabs', []);
+      emitter.emit('webview-create');
+      return;
     }
+
+    if (val.length === 0) {
+      emitter.emit('webview-create');
+    } else {
+      for (let v of val) {
+        emitter.emit('webview-create', v);
+      }
+    }
+  }).catch(err => {
+    console.error('Error loading tabs from storage:', err);
+    // Fallback: create a new tab
+    emitter.emit('webview-create');
+  });
+
+  // ✅ FIX: Store interval ID for cleanup (fixes memory leak)
+  state.tabsInterval = setInterval(() => {
+    try {
+      const tabs = [];
+      
+      for (let view of state.views) {
+        const webviewEl = document.querySelector('#' + view.id);
+        if (webviewEl) {
+          tabs.push(webviewEl.getURL());
+        }
+      }
+
+      keyval.set('tabs', tabs).catch(err => {
+        console.error('Error saving tabs:', err);
+      });
+    } catch (err) {
+      console.error('Error in tab save interval:', err);
+    }
+  }, 500);
+});
+
+// ✅ FIX: Cleanup interval on window close to prevent memory leak
+window.addEventListener('beforeunload', () => {
+  if (state.tabsInterval) {
+    clearInterval(state.tabsInterval);
+    state.tabsInterval = null;
   }
 });
 
-setInterval(() => {
-  const tabs = [];
-
-  for (let view of state.views) {
-    tabs.push(document.querySelector('#' + view.id).getURL());
-  }
-
-  keyval.set('tabs', tabs);
-}, 500);
-
 emitter.on('tabs-db-flush', () => {
-  keyval.set('tabs', []);
+  keyval.set('tabs', []).catch(err => {
+    console.error('Error flushing tabs:', err);
+  });
 });

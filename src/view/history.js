@@ -178,66 +178,94 @@ module.exports = emitter => {
         document.body.removeChild(titleBarOverlay);
       }
     } else {
-      a = alert({
-        text: element,
-        position: 'bottom'
-      });
-
-      document.body.appendChild(titleBarOverlay);
-      const container = element.querySelector('.history-container');
-      container.innerHTML = ''; // Clear previous content
-
-      db.visit.orderBy('timestamp').reverse().toArray().then(visits => {
-        const groups = {};
-
-        // Group visits
-        visits.forEach(visit => {
-          const group = getGroupTitle(visit.timestamp);
-          if (!groups[group]) groups[group] = [];
-          groups[group].push(visit);
+      try {
+        a = alert({
+          text: element,
+          position: 'bottom'
         });
 
-        // Render groups
-        for (const [groupTitle, items] of Object.entries(groups)) {
-          const groupHeader = html`<h2>${groupTitle}</h2>`;
-          const list = html`<ul></ul>`;
+        document.body.appendChild(titleBarOverlay);
+        const container = element.querySelector('.history-container');
+        if (!container) {
+          console.error('History container not found');
+          return;
+        }
+        container.innerHTML = ''; // Clear previous content
 
-          items.forEach(data => {
-            const date = new Date(data.timestamp);
-            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // ✅ FIX: Add error handling for database operations
+        db.visit.orderBy('timestamp').reverse().toArray()
+          .then(visits => {
+            const groups = {};
 
-            const li = html`<li>
-              <span class="title">${dotify(data.title || 'No Title', 60)}</span>
-              <div class="meta">
-                <span class="url" onclick=${() => {
-                emitter.emit('tabs-create', data.url);
-                a(); // Close alert
-                toggle = !toggle;
-                if (document.body.contains(titleBarOverlay)) {
-                  document.body.removeChild(titleBarOverlay);
-                }
-              }}>${dotify(data.url, 50)}</span>
-                <span class="time">${timeStr}</span>
-              </div>
-            </li>`;
-            list.appendChild(li);
+            // Group visits
+            visits.forEach(visit => {
+              const group = getGroupTitle(visit.timestamp);
+              if (!groups[group]) groups[group] = [];
+              groups[group].push(visit);
+            });
+
+            // Render groups
+            for (const [groupTitle, items] of Object.entries(groups)) {
+              const groupHeader = html`<h2>${groupTitle}</h2>`;
+              const list = html`<ul></ul>`;
+
+              items.forEach(data => {
+                const date = new Date(data.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const li = html`<li>
+                  <span class="title">${dotify(data.title || 'No Title', 60)}</span>
+                  <div class="meta">
+                    <span class="url" onclick=${() => {
+                    emitter.emit('tabs-create', data.url);
+                    a(); // Close alert
+                    toggle = !toggle;
+                    if (document.body.contains(titleBarOverlay)) {
+                      document.body.removeChild(titleBarOverlay);
+                    }
+                  }}>${dotify(data.url, 50)}</span>
+                    <span class="time">${timeStr}</span>
+                  </div>
+                </li>`;
+                list.appendChild(li);
+              });
+
+              container.appendChild(groupHeader);
+              container.appendChild(list);
+            }
+          })
+          .catch(err => {
+            console.error('Error loading history from database:', err);
+            // Show error message in UI
+            const errorMsg = html`<p style="color: #d93025; text-align: center; padding: 20px;">Unable to load history. Please try again.</p>`;
+            container.appendChild(errorMsg);
           });
 
-          container.appendChild(groupHeader);
-          container.appendChild(list);
-        }
-      });
-
-      toggle = !toggle;
+        toggle = !toggle;
+      } catch (err) {
+        console.error('Error toggling history view:', err);
+      }
     }
   });
 
   emitter.on('history-navigated', data => {
-    const time = new Date().getTime();
-    db.visit.add({
-      url: data.url,
-      title: data.title,
-      timestamp: time
-    });
+    try {
+      // ✅ FIX: Add validation and error handling
+      if (!data || !data.url) {
+        console.warn('Invalid history data:', data);
+        return;
+      }
+
+      const time = new Date().getTime();
+      db.visit.add({
+        url: data.url,
+        title: data.title || 'No Title',
+        timestamp: time
+      }).catch(err => {
+        console.error('Error saving history entry:', err);
+      });
+    } catch (err) {
+      console.error('Error in history-navigated handler:', err);
+    }
   });
 };

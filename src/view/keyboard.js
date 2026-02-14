@@ -1,103 +1,97 @@
 // src/view/keyboard.js
 
-const { Menu, MenuItem, dialog } = require('@electron/remote');
+// ✅ SECURITY: Removed @electron/remote dependency
+// Keyboard shortcuts are now handled via DOM event listeners for better security
 
 module.exports = (emitter, state) => {
-  const menu = new Menu();
+  // ✅ FIX: Use DOM event listeners instead of remote Menu API
+  // This avoids security vulnerabilities from @electron/remote
 
-  // macOS App Menu (required)
-  if (process.platform === 'darwin') {
-    menu.append(new MenuItem({ role: 'appMenu' }));
-  }
+  const handleKeyDown = (ev) => {
+    const key = ev.key.toLowerCase();
+    const isCmdOrCtrl = ev.metaKey || ev.ctrlKey;
+    const isShift = ev.shiftKey;
 
-  // Build submenu as ARRAY first
-  const submenuTemplate = [
-    {
-      label: 'Open a Dialog',
-      accelerator: 'CommandOrControl+Alt+R',
-      click: () => dialog.showMessageBox({ message: 'Hello World!' })
-    },
-
-    {
-      label: 'New Tab',
-      accelerator: 'CommandOrControl+T',
-      click: () => emitter.emit('tabs-create')
-    },
-
-    {
-      label: 'Close Tab',
-      accelerator: 'CommandOrControl+W',
-      click: () => emitter.emit('tabs-remove-current')
-    },
-
-    {
-      label: 'Back',
-      accelerator: 'CommandOrControl+Left',
-      click: () => emitter.emit('webview-back')
-    },
-
-    {
-      label: 'Forward',
-      accelerator: 'CommandOrControl+Right',
-      click: () => emitter.emit('webview-forward')
-    },
-
-    { type: 'separator' },
-
-    {
-      label: 'Reload',
-      accelerator: 'CommandOrControl+R',
-      click: () => emitter.emit('webview-reload')
-    },
-
-    // TODO: Fix this
-    // {
-    //   label: 'Last Tab',
-    //   accelerator: 'CommandOrControl+0',
-    //   click: () => emitter.emit('tabs-last')
-    // }
-
-    // TODO: command + shift + d / ctrl + shift + d
-    , {
-      label: "Open Dev Tools",
-      accelerator: "Command+Shift+D",
-      click: () => emitter.emit("webview-devtools")
+    // Command/Ctrl + T: New Tab
+    if (isCmdOrCtrl && key === 't' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('tabs-create');
+      return;
     }
 
-    // TODO: command + shift + a / ctrl + shift + a
-    , {
-      label: "Open About",
-      accelerator: "Command+Shift+A",
-      click: () => emitter.emit("webview-about")
-    },
-
-    // TODO: command + shift + h / ctrl + shift + h
-    {
-      label: "Open Home",
-      accelerator: "Command+Shift+H",
-      click: () => emitter.emit("webview-home")
-    },
-
-    // TODO: command  + h / ctrl  + h
-    {
-      label: "Open History",
-      accelerator: "Command+H",
-      click: () => emitter.emit("history-toggle")
+    // Command/Ctrl + W: Close Tab
+    if (isCmdOrCtrl && key === 'w' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('tabs-remove-current');
+      return;
     }
-  ];
 
-  // ? Cmd/Ctrl + 1–9 → Switch Tabs
-  for (let i = 1; i <= 9; i++) {
-    submenuTemplate.push({
-      label: `Tab ${i}`,
-      accelerator: `CommandOrControl+${i}`,
-      click: () => emitter.emit('tabs-go-to', i - 1)
-    });
-  }
+    // Command/Ctrl + R: Reload
+    if (isCmdOrCtrl && key === 'r' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('webview-reload');
+      return;
+    }
 
-  const submenu = Menu.buildFromTemplate(submenuTemplate);
+    // Command/Ctrl + Left Arrow: Back
+    if (isCmdOrCtrl && key === 'arrowleft' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('webview-back');
+      return;
+    }
 
-  menu.append(new MenuItem({ label: 'File', submenu }));
+    // Command/Ctrl + Right Arrow: Forward
+    if (isCmdOrCtrl && key === 'arrowright' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('webview-forward');
+      return;
+    }
 
-  Menu.setApplicationMenu(menu);
+    // Command/Ctrl + Shift + D: Dev Tools
+    if (isCmdOrCtrl && isShift && key === 'd') {
+      ev.preventDefault();
+      emitter.emit('webview-devtools');
+      return;
+    }
+
+    // Command/Ctrl + Shift + A: About
+    if (isCmdOrCtrl && isShift && key === 'a') {
+      ev.preventDefault();
+      emitter.emit('webview-about');
+      return;
+    }
+
+    // Command/Ctrl + Shift + H: Home
+    if (isCmdOrCtrl && isShift && key === 'h') {
+      ev.preventDefault();
+      emitter.emit('webview-home');
+      return;
+    }
+
+    // Command/Ctrl + H: History (only without shift to avoid conflict with hide)
+    if (isCmdOrCtrl && key === 'h' && !isShift) {
+      ev.preventDefault();
+      emitter.emit('history-toggle');
+      return;
+    }
+
+    // Command/Ctrl + 1-9: Switch to tab
+    if (isCmdOrCtrl && !isShift && key >= '1' && key <= '9') {
+      ev.preventDefault();
+      const tabIndex = parseInt(key) - 1;
+      emitter.emit('tabs-go-to', tabIndex);
+      return;
+    }
+  };
+
+  // Attach global keyboard listener
+  document.addEventListener('keydown', handleKeyDown);
+
+  // Cleanup function (can be called if needed)
+  const cleanup = () => {
+    document.removeEventListener('keydown', handleKeyDown);
+  };
+
+  // Store cleanup function on state for potential future use
+  state.cleanupKeyboard = cleanup;
 };

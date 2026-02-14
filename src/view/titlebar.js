@@ -154,17 +154,29 @@ module.exports = (emitter, state) => {
   // Address Bar Logic
   emitter.on('titlebar-title-updated', () => {
     if (!state.hovering) {
-      document.querySelector('.urlbar').value = state.title;
+      const urlbar = document.querySelector('.urlbar');
+      if (urlbar) {
+        urlbar.value = state.title || '';
+      }
     }
   });
 
   emitter.on('titlebar-url-updated', () => {
     if (state.hovering) {
-      document.querySelector('.urlbar').value = betterUrl(state.url);
+      const urlbar = document.querySelector('.urlbar');
+      if (urlbar) {
+        urlbar.value = betterUrl(state.url);
+      }
     }
   });
 
   const urlInput = document.querySelector('.urlbar');
+
+  // ✅ FIX: Add null check for urlInput
+  if (!urlInput) {
+    console.error('URL input element not found');
+    return;
+  }
 
   urlInput.addEventListener('mouseover', () => {
     urlInput.value = betterUrl(state.url);
@@ -174,7 +186,7 @@ module.exports = (emitter, state) => {
   });
 
   urlInput.addEventListener('mouseleave', () => {
-    urlInput.value = state.title;
+    urlInput.value = state.title || '';
     urlInput.blur();
     emitter.emit('webview-set-focus');
     state.hovering = false;

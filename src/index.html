@@ -2,6 +2,8 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <!-- ✅ SECURITY: Content Security Policy to prevent XSS attacks -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:; frame-src 'self' https: http:;">
     <title>Cargo</title>
     <style media="screen">
       body {

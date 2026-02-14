@@ -25,14 +25,34 @@ module.exports = onClosed => {
     frame: platform() != 'macos' ? false : true,
     show: false,
     webPreferences: {
-      // nodeIntegration: true
-      nodeIntegration: true,  // ⚠️ Keep true for now to minimize refactoring
-    contextIsolation: false, // ⚠️ Keep false for now (Legacy Mode)
-    webviewTag: true,       // ✅ REQUIRED: Enables <webview> for the browser UI
-    enableRemoteModule: true
+      // ✅ SECURITY: Context isolation enabled
+      contextIsolation: true,
+      // ✅ SECURITY: Node integration disabled in renderer
+      nodeIntegration: false,
+      // ✅ SECURITY: Preload script for safe API exposure
+      preload: path.join(__dirname, 'preload.js'),
+      // ✅ REQUIRED: Enables <webview> for the browser UI
+      webviewTag: true,
+      // ✅ SECURITY: Disable remote module
+      enableRemoteModule: false,
+      // ✅ SECURITY: Prevent sandbox bypass
+      sandbox: false // Required for preload script with nodeIntegration: false
     },
     title: 'Cargo',
     icon: image
+  });
+
+  // ✅ SECURITY: Set permission request handler
+  win.webContents.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    // Only allow safe permissions
+    const allowedPermissions = ['clipboard-sanitized-write'];
+    
+    if (allowedPermissions.includes(permission)) {
+      callback(true);
+    } else {
+      console.warn(`Blocked permission request: ${permission}`);
+      callback(false);
+    }
   });
 
   win.once('ready-to-show', () => {
