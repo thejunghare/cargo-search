@@ -42,8 +42,8 @@ module.exports = onClosed => {
     icon: image
   });
 
-  // ✅ SECURITY: Set permission request handler
-  win.webContents.setPermissionRequestHandler((webContents, permission, callback, details) => {
+  // ✅ SECURITY: Set permission request handler on session
+  win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
     // Only allow safe permissions
     const allowedPermissions = ['clipboard-sanitized-write'];
     
