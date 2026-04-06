@@ -37,48 +37,41 @@
 }
 
 
-#tabs{
-    background: #23272A !important;
-    border-bottom-color: #333333 !important;
-}
-#tabs li{
-    border-right-color: #333333 !important;
+:root {
+    --tabs-vertical-bg: rgba(35, 39, 42, 0.95);
 }
 
-#tabs li:hover{
-    background: #23272A !important;
-}
-#tabs li.active{
-    border-bottom-color: white !important;
-}
-#tabs li a{
-  color: white;
+#tabs {
+    background: rgba(35, 39, 42, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
 }
 
-#titlebar .bar{
-  border-bottom-color:  #333333 !important;
-  background: #23272A !important;
+#tabs li {
+    background: rgba(255,255,255,0.03) !important;
+    border: none !important;
+    color: #99aab5 !important;
 }
 
-#titlebar .bg{
-    color: #616161 !important;
+#tabs li.active {
+    background: #2c2f33 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
 }
 
-#titlebar .input{
-    background: #2C2F33 !important;
-    color: white !important;
+#titlebar .bar {
+    background: rgba(35, 39, 42, 0.85) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
 }
 
-
-#titlebar:hover, #titlebar:focus{
-    border-color: #2C2F33  !important;
-    background: #23272A !important;
+#titlebar .input {
+    background: rgba(255,255,255,0.03) !important;
+    color: #ffffff !important;
 }
 
-#titlebar::-moz-selection { background: yellow !important; }
-#titlebar::selection { background: yellow !important; }
-
-#titlebar .button img{
-    filter: invert(0.8);
+#titlebar .input:focus {
+    background: #2c2f33 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
 }
 

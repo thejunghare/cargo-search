@@ -1,81 +1,120 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cargo - Home</title>
-    <style media="screen">
-      body {
-        margin: 0px;
-        padding: 0px;
-        left: 0px;
-        top: 0px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        flex-direction: column;
-        height: 100vh;
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cargo - Home</title>
+  <style media="screen">
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #202124;
+      --input-bg: #f1f3f4;
+      --input-hover-bg: #e8eaed;
+      --accent-color: #1a73e8;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
       }
 
-      .dest {
-        text-align: center;
-        color: #616161;
-        padding: 10px;
-        width: 550px;
-        border: solid transparent 1px;
-        border-radius: 3px;
-        outline: none;
-        transition: all .3s;
-        background: #F5F5F5;
-        margin: 15px auto;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
+    }
 
-      .dest:hover, .dest:focus {
-        border: solid #BDBDBD 1px;
-      }
+    .dest {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 24px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      outline: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 6px rgba(32, 33, 36, 0.1);
+    }
 
-      ::-moz-selection { background: yellow; }
-      ::selection { background: yellow; }
-    </style>
-  </head>
-  <body>
-    <h1>🚂🚋🚋 Cargo</h1>
-    <p class="text">-</p>
-    <input type="text" class="dest" placeholder="Destination">
+    .dest:hover {
+      background: var(--input-hover-bg);
+      box-shadow: 0 1px 8px rgba(32, 33, 36, 0.15);
+    }
 
-    <script src="../static/tld.js" charset="utf-8"></script>
-    <script src="../static/normalize.js" charset="utf-8"></script>
-    <script src="../static/vkey.js" charset="utf-8"></script>
-    <script type="text/javascript">
-      document.querySelector('.dest').addEventListener('keydown', (ev) => {
-        if (vkey[ev.keyCode] == '<enter>') {
-          ev.preventDefault();
+    .dest:focus {
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(32, 33, 36, 0.2);
+      transform: scale(1.02);
+    }
 
-          const url = normalizeUrl(document.querySelector('.dest').value);
-          const parsed = tldjs.parse(url, true);
+    .logo {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      letter-spacing: -0.5px;
+      color: #3c4043;
+    }
 
-          if (parsed.domain != null && parsed.isValid == true) {
-            window.location.href = url;
-          } else { 
-            // ! changed to google.com
-            window.location.href = `https://google.com/search?q=${ document.querySelector('.dest').value }`;
-          }
+    ::-moz-selection {
+      background: rgba(26, 115, 232, 0.2);
+    }
+
+    ::selection {
+      background: rgba(26, 115, 232, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="logo">Cargo</div>
+    <input type="text" class="dest" placeholder="Search or type URL" autofocus>
+  </div>
+
+  <script src="../static/tld.js" charset="utf-8"></script>
+  <script src="../static/normalize.js" charset="utf-8"></script>
+  <script src="../static/vkey.js" charset="utf-8"></script>
+  <script type="text/javascript">
+    document.querySelector('.dest').addEventListener('keydown', (ev) => {
+      if (vkey[ev.keyCode] == '<enter>') {
+        ev.preventDefault();
+
+        const url = normalizeUrl(document.querySelector('.dest').value);
+        const parsed = tldjs.parse(url, true);
+
+        if (parsed.domain != null && parsed.isValid == true) {
+          window.location.href = url;
+        } else {
+          // ! changed to google.com
+          window.location.href = `https://google.com/search?q=${document.querySelector('.dest').value}`;
         }
-      }, false);
+      }
+    }, false);
+  </script>
+</body>
 
-      const texts = [
-        'Where is the next train station?',
-        'Let the train carry you!',
-        'Hop in!',
-        'Have you bought a ticket?',
-        'Could I sit next to the window?',
-        'When does the next train leave?',
-      ];
-
-      const key = Math.floor((Math.random() * texts.length) + 1) - 1;
-
-      document.querySelector('.text').textContent = texts[key];
-    </script>
-  </body>
 </html>

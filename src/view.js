@@ -41,57 +41,63 @@ const state = {
   url: 'https://home.cargo',
   views: [],
   theme: 'light',
+  tabLayout: 'horizontal', // 'horizontal' or 'vertical'
   tabsInterval: null // Store interval ID for cleanup
   // store
 };
 
 // ✅ FIX: Initialize components when DOM is ready to avoid race conditions
 document.addEventListener('DOMContentLoaded', () => {
-  titlebar(emitter, state);
-  progress(emitter);
-  history(emitter);
-  webview(emitter, state);
-  menu(emitter, state);
-  keyboard(emitter, state);
-  // onboarding(emitter, state);
+  // Load layout preference early
+  storage.get('tabLayout').then(val => {
+    if (val) state.tabLayout = val;
 
-  setTimeout(() => {
-    tabs(emitter, state);
-  }, 200);
+    titlebar(emitter, state);
+    progress(emitter);
+    history(emitter);
+    webview(emitter, state);
+    menu(emitter, state);
+    keyboard(emitter, state);
+    // onboarding(emitter, state);
 
-  // ✅ FIX: Focus after DOM is ready
-  const urlbar = document.querySelector('.urlbar');
-  if (urlbar) {
-    urlbar.focus();
-  }
+    setTimeout(() => {
+      tabs(emitter, state);
+    }, 200);
 
-  // ✅ FIX: Add type checking to prevent errors - use localStorage
-  storage.get('tabs').then(val => {
-    // ✅ FIX: Check if val is undefined or not an array
-    if (!Array.isArray(val)) {
-      storage.set('tabs', []);
-      emitter.emit('webview-create');
-      return;
+    // ✅ FIX: Focus after DOM is ready
+    const urlbar = document.querySelector('.urlbar');
+    if (urlbar) {
+      urlbar.focus();
     }
 
-    if (val.length === 0) {
-      emitter.emit('webview-create');
-    } else {
-      for (let v of val) {
-        emitter.emit('webview-create', v);
+    // ✅ FIX: Add type checking to prevent errors - use localStorage
+    storage.get('tabs').then(val => {
+      // ✅ FIX: Check if val is undefined or not an array
+      if (!Array.isArray(val)) {
+        storage.set('tabs', []);
+        emitter.emit('webview-create');
+        return;
       }
-    }
-  }).catch(err => {
-    console.warn('Storage unavailable, starting fresh:', err.message);
-    // Fallback: create a new tab
-    emitter.emit('webview-create');
+
+      if (val.length === 0) {
+        emitter.emit('webview-create');
+      } else {
+        for (let v of val) {
+          emitter.emit('webview-create', v);
+        }
+      }
+    }).catch(err => {
+      console.warn('Storage unavailable, starting fresh:', err.message);
+      // Fallback: create a new tab
+      emitter.emit('webview-create');
+    });
   });
 
   // ✅ FIX: Store interval ID for cleanup (fixes memory leak)
   state.tabsInterval = setInterval(() => {
     try {
       const tabs = [];
-      
+
       for (let view of state.views) {
         const webviewEl = document.querySelector('#' + view.id);
         if (webviewEl) {
@@ -120,4 +126,12 @@ emitter.on('tabs-db-flush', () => {
   storage.set('tabs', []).catch(err => {
     // Silently fail
   });
+});
+
+emitter.on('tabs-layout-change', layout => {
+  state.tabLayout = layout;
+  storage.set('tabLayout', layout).catch(err => {
+    // Silently fail
+  });
+  emitter.emit('tabs-render');
 });

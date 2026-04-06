@@ -1,81 +1,77 @@
-.alert.top{
+.alert.top {
     border-bottom-color: #E0E0E0 !important;
 }
 
-.alert.bottom{
+.alert.bottom {
     border-top-color: #E0E0E0 !important;
 }
-#history{
-    background:  white !important;
- }
 
-#history a{
-  color: black !important;
+#history {
+    background: white !important;
 }
-#history li{
+
+#history a {
+    color: black !important;
+}
+
+#history li {
     border-color: #efefef !important;
 }
 
-#history .time{
+#history .time {
     color: #757575 !important;
 }
-#history a{
+
+#history a {
     color: black !important;
 }
 
-#history-overlay{
+#history-overlay {
     background: white !important;
     color: black !important;
 }
 
-#menu li a{
+#menu li a {
     color: black !important;
 }
 
-#onboarding{
+#onboarding {
     background: white !important;
 }
 
 
-#tabs{
-    background: white !important;
-    border-bottom-color: #E0E0E0 !important;
-}
-#tabs li{
-    background: white !important;
-    border-right-color: #E0E0E0 !important;
-}
-#tabs li a{
-    color: black !important;
-  }
-
-#tabs li:hover{
-    background: #f5f5f5 !important;
-}
-#tabs li.active{
-    border-bottom-color: black !important;
+:root {
+    --tabs-vertical-bg: rgba(255, 255, 255, 0.95);
 }
 
-#titlebar .bar{
-  border-bottom-color:  #BDBDBD !important;
-  background: white !important;
+#tabs {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
 }
 
-#titlebar .bg{
-    color: #616161 !important;
+#tabs li {
+    background: rgba(0, 0, 0, 0.03) !important;
+    border: none !important;
 }
 
-#titlebar .input{
-
-    background: white !important;
-    color: #616161 !important;
+#tabs li.active {
+    background: #fff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
 }
 
-
-#titlebar:hover, #titlebar:focus{
-    border-color: #BDBDBD  !important;
-    background: #FAFAFA !important;
+#titlebar .bar {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03) !important;
 }
 
-#titlebar::-moz-selection { background: yellow; }
-#titlebar::selection { background: yellow; }
+#titlebar .input {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #202124 !important;
+}
+
+#titlebar .input:focus {
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}

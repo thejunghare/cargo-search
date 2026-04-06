@@ -16,19 +16,19 @@ const DANGEROUS_PROTOCOLS = ['javascript:', 'vbscript:', 'data:', 'file:'];
 const isValidUrl = (urlString) => {
   try {
     const parsed = new URL(urlString);
-    
+
     // Check against dangerous protocols
     if (DANGEROUS_PROTOCOLS.includes(parsed.protocol)) {
       console.warn(`Blocked navigation to dangerous protocol: ${parsed.protocol}`);
       return false;
     }
-    
+
     // Only allow safe protocols
     if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
       console.warn(`Blocked navigation to unsupported protocol: ${parsed.protocol}`);
       return false;
     }
-    
+
     return true;
   } catch (e) {
     return false;
@@ -134,9 +134,15 @@ module.exports = (emitter, state) => {
     const id = '_wv_' + uuid();
     src = src || './pages/home.html';
 
-    const viewElement = html`<div style="display: none;">
+    const isVertical = state.tabLayout === 'vertical';
+    const topOffset = 48 + (isVertical ? 0 : 32); // 48 titlebar + 32 horizontal tabs
+    const leftOffset = isVertical ? 200 : 0;
+    const width = isVertical ? 'calc(100% - 200px)' : '100%';
+    const height = isVertical ? 'calc(100vh - 48px)' : 'calc(100vh - 80px)';
+
+    const viewElement = html`<div style="display: none; position: fixed; top: ${topOffset}px; left: ${leftOffset}px; width: ${width}; height: ${height}; transition: all .3s ease;">
       <webview id="${id}" src="${src
-      }" allowpopups autosize style="width: 100%; height: calc(100vh - 40px);"></webview>
+      }" allowpopups autosize style="width: 100%; height: 100%;"></webview>
     </div>`;
 
     document.body.appendChild(viewElement);
@@ -284,9 +290,9 @@ module.exports = (emitter, state) => {
 
       // ✅ SECURITY: Check for dangerous protocols before normalization
       const lowerSlug = slug.toLowerCase();
-      if (lowerSlug.startsWith('javascript:') || 
-          lowerSlug.startsWith('vbscript:') || 
-          lowerSlug.startsWith('data:')) {
+      if (lowerSlug.startsWith('javascript:') ||
+        lowerSlug.startsWith('vbscript:') ||
+        lowerSlug.startsWith('data:')) {
         console.warn('Blocked navigation to dangerous protocol in URL:', slug);
         return;
       }
@@ -294,10 +300,10 @@ module.exports = (emitter, state) => {
       // ✅ SECURITY: Only allow file:// URLs for internal pages
       if (slug.startsWith('file:///')) {
         // Validate it's one of our internal pages
-        const isInternalPage = Object.values(pages).some(page => 
+        const isInternalPage = Object.values(pages).some(page =>
           slug.includes(page)
         );
-        
+
         if (isInternalPage) {
           return webview.loadURL(slug);
         } else {
@@ -364,5 +370,20 @@ module.exports = (emitter, state) => {
     } else {
       changeTheme('dark');
     }
+  });
+
+  emitter.on('tabs-render', () => {
+    const isVertical = state.tabLayout === 'vertical';
+    const topOffset = 48 + (isVertical ? 0 : 32);
+    const leftOffset = isVertical ? 200 : 0;
+    const width = isVertical ? 'calc(100% - 200px)' : '100%';
+    const height = isVertical ? 'calc(100vh - 48px)' : 'calc(100vh - 80px)';
+
+    state.views.forEach(view => {
+      view.element.style.top = `${topOffset}px`;
+      view.element.style.left = `${leftOffset}px`;
+      view.element.style.width = width;
+      view.element.style.height = height;
+    });
   });
 };
